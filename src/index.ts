@@ -45,4 +45,5 @@ export {
   OrganizationResource,
   AgentsResource,
   DocsResource,
+  EntitiesResource,
 } from './resources';

@@ -233,3 +233,13 @@ export type {
   CustomerSegmentListParams,
   CustomerSegmentListResponse,
 } from './customer-segments';
+
+// Entity types (unified search)
+export type {
+  EntityType,
+  ContactEntity,
+  CustomerEntity,
+  Entity,
+  EntitiesSearchParams,
+  EntitiesSearchResponse,
+} from './entities';

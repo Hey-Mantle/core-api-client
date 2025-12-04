@@ -27,3 +27,4 @@ export { MeResource } from './me';
 export { OrganizationResource } from './organization';
 export { AgentsResource } from './agents';
 export { DocsResource } from './docs';
+export { EntitiesResource } from './entities';

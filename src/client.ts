@@ -37,6 +37,7 @@ import { MeResource } from './resources/me';
 import { OrganizationResource } from './resources/organization';
 import { AgentsResource } from './resources/agents';
 import { DocsResource } from './resources/docs';
+import { EntitiesResource } from './resources/entities';
 
 /**
  * Mantle Core API Client
@@ -92,6 +93,7 @@ export class MantleCoreClient {
   public readonly organization: OrganizationResource;
   public readonly agents: AgentsResource;
   public readonly docs: DocsResource;
+  public readonly entities: EntitiesResource;
 
   constructor(config: MantleCoreClientConfig) {
     if (!config.apiKey && !config.accessToken) {
@@ -134,6 +136,7 @@ export class MantleCoreClient {
     this.organization = new OrganizationResource(this);
     this.agents = new AgentsResource(this);
     this.docs = new DocsResource(this);
+    this.entities = new EntitiesResource(this);
   }
 
   /**
