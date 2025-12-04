@@ -1,0 +1,56 @@
+{
+  "name": "@heymantle/core-api-client",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Mantle Core API",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "build-and-publish": "npm install && npm run build && npm publish"
+  },
+  "author": "Mantle",
+  "license": "MIT",
+  "publishConfig": {
+    "@heymantle:registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hey-Mantle/core-api-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hey-Mantle/core-api-client/issues"
+  },
+  "keywords": [
+    "mantle",
+    "api",
+    "sdk",
+    "typescript",
+    "client"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^1.2.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.3",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
