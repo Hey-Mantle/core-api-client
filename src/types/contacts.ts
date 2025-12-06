@@ -4,9 +4,8 @@ import type { ListParams, PaginatedResponse } from './common';
  * Social profile for a contact
  */
 export interface SocialProfile {
-  platform: string;
-  url: string;
-  username?: string;
+  key: string;
+  value: string;
 }
 
 /**
