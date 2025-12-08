@@ -14,6 +14,20 @@ export {
   MantleRateLimitError,
 } from './utils/errors';
 
+// Middleware exports
+export {
+  createAuthRefreshMiddleware,
+  type AuthRefreshOptions,
+  type Middleware,
+  type MiddlewareContext,
+  type MiddlewareRequest,
+  type MiddlewareResponse,
+  type MiddlewareOptions,
+  type NextFunction,
+  type HttpMethod,
+  MiddlewareManager,
+} from './middleware';
+
 // Resource class exports (for advanced usage)
 export {
   BaseResource,

@@ -1,4 +1,6 @@
 import type { MantleCoreClientConfig, RequestOptions } from './types/common';
+import type { Middleware, MiddlewareOptions, MiddlewareContext, MiddlewareResponse, MiddlewareRequest } from './middleware/types';
+import { MiddlewareManager } from './middleware/manager';
 import { sanitizeObject, toQueryString } from './utils/sanitize';
 import {
   MantleAPIError,
@@ -60,9 +62,10 @@ import { EntitiesResource } from './resources/entities';
  */
 export class MantleCoreClient {
   private readonly baseURL: string;
-  private readonly apiKey?: string;
-  private readonly accessToken?: string;
+  private apiKey?: string;
+  private accessToken?: string;
   private readonly timeout: number;
+  private readonly middlewareManager: MiddlewareManager;
 
   // Resources
   public readonly customers: CustomersResource;
@@ -107,6 +110,20 @@ export class MantleCoreClient {
     this.accessToken = config.accessToken;
     this.timeout = config.timeout || 30000;
 
+    // Initialize middleware manager
+    this.middlewareManager = new MiddlewareManager();
+
+    // Register initial middleware
+    if (config.middleware) {
+      for (const mw of config.middleware) {
+        if (Array.isArray(mw)) {
+          this.middlewareManager.use(mw[0], mw[1]);
+        } else {
+          this.middlewareManager.use(mw);
+        }
+      }
+    }
+
     // Initialize all resources
     this.customers = new CustomersResource(this);
     this.contacts = new ContactsResource(this);
@@ -137,6 +154,52 @@ export class MantleCoreClient {
     this.agents = new AgentsResource(this);
     this.docs = new DocsResource(this);
     this.entities = new EntitiesResource(this);
+  }
+
+  /**
+   * Register a middleware function
+   *
+   * @param middleware - The middleware function to register
+   * @param options - Optional configuration (name, priority)
+   * @returns this for chaining
+   *
+   * @example
+   * ```typescript
+   * client.use(async (ctx, next) => {
+   *   console.log('Request:', ctx.request.url);
+   *   await next();
+   *   console.log('Response:', ctx.response?.status);
+   * });
+   * ```
+   */
+  use(middleware: Middleware, options?: MiddlewareOptions): this {
+    this.middlewareManager.use(middleware, options);
+    return this;
+  }
+
+  /**
+   * Remove a middleware by name
+   *
+   * @param name - The name of the middleware to remove
+   * @returns true if removed, false if not found
+   */
+  removeMiddleware(name: string): boolean {
+    return this.middlewareManager.remove(name);
+  }
+
+  /**
+   * Update authentication credentials
+   * Useful for middleware that needs to refresh tokens
+   *
+   * @param credentials - New credentials to set
+   */
+  updateAuth(credentials: { apiKey?: string; accessToken?: string }): void {
+    if (credentials.apiKey !== undefined) {
+      this.apiKey = credentials.apiKey;
+    }
+    if (credentials.accessToken !== undefined) {
+      this.accessToken = credentials.accessToken;
+    }
   }
 
   /**
@@ -191,6 +254,98 @@ export class MantleCoreClient {
    * Makes an HTTP request to the API
    */
   private async makeRequest<T>(
+    endpoint: string,
+    options: RequestOptions
+  ): Promise<T> {
+    // If middleware is registered, use the middleware chain
+    if (this.middlewareManager.hasMiddleware()) {
+      return this.makeRequestWithMiddleware<T>(endpoint, options);
+    }
+
+    // Direct execution (no middleware overhead)
+    return this.executeRequest<T>(endpoint, options);
+  }
+
+  /**
+   * Execute request through middleware chain
+   */
+  private async makeRequestWithMiddleware<T>(
+    endpoint: string,
+    options: RequestOptions
+  ): Promise<T> {
+    const request: MiddlewareRequest = {
+      url: `${this.baseURL}${endpoint}`,
+      method: options.method,
+      headers: {
+        Authorization: this.getAuthHeader(),
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      body: options.body,
+      endpoint,
+    };
+
+    const ctx: MiddlewareContext<T> = {
+      request,
+      retry: false,
+      retryCount: 0,
+      maxRetries: 3,
+      updateAuth: (credentials) => this.updateAuth(credentials),
+    };
+
+    const coreHandler = async (): Promise<MiddlewareResponse<T>> => {
+      // Use current headers from context (may have been modified by middleware)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+      try {
+        const response = await fetch(ctx.request.url, {
+          method: ctx.request.method,
+          body: ctx.request.body,
+          headers: ctx.request.headers,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          await this.handleErrorResponse(response);
+        }
+
+        const text = await response.text();
+        const data = text ? (JSON.parse(text) as T) : ({} as T);
+
+        return {
+          data,
+          status: response.status,
+          headers: response.headers,
+        };
+      } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof MantleAPIError) {
+          throw error;
+        }
+
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new MantleAPIError('Request timeout', 408);
+        }
+
+        throw new MantleAPIError(
+          error instanceof Error ? error.message : 'Unknown error occurred',
+          500
+        );
+      }
+    };
+
+    const response = await this.middlewareManager.execute<T>(ctx, coreHandler);
+    return response.data;
+  }
+
+  /**
+   * Direct request execution (no middleware)
+   */
+  private async executeRequest<T>(
     endpoint: string,
     options: RequestOptions
   ): Promise<T> {

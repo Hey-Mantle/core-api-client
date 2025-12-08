@@ -1,3 +1,10 @@
+import type { Middleware, MiddlewareOptions } from '../middleware/types';
+
+/**
+ * Middleware configuration item
+ */
+export type MiddlewareConfig = Middleware | [Middleware, MiddlewareOptions];
+
 /**
  * Configuration for the MantleCoreClient
  */
@@ -10,6 +17,8 @@ export interface MantleCoreClientConfig {
   accessToken?: string;
   /** Request timeout in milliseconds. Defaults to 30000 */
   timeout?: number;
+  /** Middleware to register on instantiation */
+  middleware?: MiddlewareConfig[];
 }
 
 /**
