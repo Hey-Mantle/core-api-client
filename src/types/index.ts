@@ -35,6 +35,7 @@ export type {
   ContactCreateParams,
   ContactUpdateParams,
   SocialProfile,
+  SocialProfileType,
 } from './contacts';
 
 // Subscription types

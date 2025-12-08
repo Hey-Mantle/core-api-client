@@ -1,10 +1,20 @@
 import type { ListParams, PaginatedResponse } from './common';
 
 /**
+ * Valid social profile types
+ */
+export type SocialProfileType =
+  | 'linkedin'
+  | 'x'
+  | 'facebook'
+  | 'instagram'
+  | 'website';
+
+/**
  * Social profile for a contact
  */
 export interface SocialProfile {
-  key: string;
+  key: SocialProfileType;
   value: string;
 }
 
@@ -31,7 +41,12 @@ export interface Contact {
 /**
  * Parameters for listing contacts
  */
-export interface ContactListParams extends ListParams {}
+export interface ContactListParams extends ListParams {
+  /** Filter by social profile type */
+  socialProfileType?: SocialProfileType;
+  /** Filter by social profile URL */
+  socialProfileUrl?: string;
+}
 
 /**
  * Response from listing contacts
