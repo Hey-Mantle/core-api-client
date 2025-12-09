@@ -79,6 +79,56 @@ export interface DealListResponse extends PaginatedResponse {
 }
 
 /**
+ * Inline customer data for deal creation/update.
+ * Matches existing customers by domain or shopifyDomain.
+ * If no match found, creates a new customer.
+ */
+export interface DealCustomerInput {
+  /** The name of the customer */
+  name?: string;
+  /** The email of the customer */
+  email?: string;
+  /** The domain of the customer (used for matching existing customers) */
+  domain?: string;
+  /** The Shopify domain of the customer (used for matching existing customers) */
+  shopifyDomain?: string;
+  /** The Shopify shop ID */
+  shopifyShopId?: string;
+  /** Tags to associate with the customer */
+  tags?: string[];
+  /** Custom fields for the customer */
+  customFields?: Record<string, unknown>;
+  /** The country code of the customer */
+  countryCode?: string;
+  /** The preferred currency of the customer */
+  preferredCurrency?: string;
+  /** Description of the customer */
+  description?: string;
+}
+
+/**
+ * Inline contact data for deal creation/update.
+ * Matches existing contacts by email.
+ * Contacts are linked to both the customer and the deal.
+ */
+export interface DealContactInput {
+  /** The email of the contact (required, used for matching existing contacts) */
+  email: string;
+  /** The name of the contact */
+  name?: string;
+  /** The phone number of the contact */
+  phone?: string;
+  /** The job title of the contact */
+  jobTitle?: string;
+  /** The label for the contact relationship (e.g., "primary", "technical") */
+  label?: string;
+  /** Notes about the contact */
+  notes?: string;
+  /** Tags for the contact */
+  tags?: string[];
+}
+
+/**
  * Parameters for creating a deal
  */
 export interface DealCreateParams {
@@ -92,14 +142,26 @@ export interface DealCreateParams {
   closedAt?: string;
   dealFlowId?: string;
   dealStageId?: string;
+  /** The ID of an existing customer (alternative to customer object) */
   customerId?: string;
+  /**
+   * Create or update a customer inline (alternative to customerId).
+   * Matches existing customers by domain or shopifyDomain.
+   */
+  customer?: DealCustomerInput;
   domain?: string;
   shopifyDomain?: string;
   companyId?: string;
   appId?: string;
   planId?: string;
   ownerIds?: string[];
+  /** Array of existing contact IDs (alternative to contacts array) */
   contactIds?: string[];
+  /**
+   * Create or update contacts inline (alternative to contactIds).
+   * Matches existing contacts by email. Contacts are linked to both the customer and the deal.
+   */
+  contacts?: DealContactInput[];
   notes?: string;
   affiliateId?: string;
   partnershipId?: string;

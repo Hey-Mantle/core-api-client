@@ -87,6 +87,8 @@ export type {
   DealListResponse,
   DealCreateParams,
   DealUpdateParams,
+  DealCustomerInput,
+  DealContactInput,
   DealFlow,
   DealFlowCreateParams,
   DealFlowUpdateParams,
