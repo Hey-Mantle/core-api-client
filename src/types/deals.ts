@@ -11,39 +11,70 @@ export interface Deal {
   currentAmount?: number;
   acquisitionChannel?: string;
   acquisitionSource?: string;
-  firstInteractionAt?: string;
-  closingAt?: string;
-  closedAt?: string;
-  stage?: string;
-  step?: number;
-  dealFlowId?: string;
-  dealStageId?: string;
-  customerId?: string;
-  domain?: string;
-  shopifyDomain?: string;
-  companyId?: string;
-  appId?: string;
-  planId?: string;
-  ownerIds?: string[];
-  contactIds?: string[];
   notes?: string;
-  affiliateId?: string;
-  partnershipId?: string;
-  archived?: boolean;
+  firstInteractionAt?: string | null;
+  closingAt?: string | null;
+  closedAt?: string | null;
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  customer?: {
-    id: string;
-    name?: string;
-  };
-  dealFlow?: {
-    id: string;
-    name: string;
-  };
   dealStage?: {
     id: string;
     name: string;
-  };
+    stage?: string;
+    weight?: number;
+  } | null;
+  dealFlow?: {
+    id: string;
+    name: string;
+  } | null;
+  customer?: {
+    id: string;
+    name?: string;
+    email?: string;
+    domain?: string;
+    shopifyDomain?: string;
+  } | null;
+  app?: {
+    id: string;
+    name: string;
+  } | null;
+  plan?: {
+    id: string;
+    name: string;
+  } | null;
+  affiliate?: {
+    id: string;
+    name?: string;
+  } | null;
+  partnership?: {
+    id: string;
+    name?: string;
+    displayName?: string;
+  } | null;
+  acquirer?: {
+    id: string;
+    name?: string;
+    email?: string;
+  } | null;
+  owners?: Array<{
+    id: string;
+    userId: string;
+    user?: {
+      id: string;
+      name?: string;
+      email?: string;
+    } | null;
+  }>;
+  contacts?: Array<{
+    id: string;
+    contactId: string;
+    contact?: {
+      id: string;
+      name?: string;
+      email?: string;
+    } | null;
+  }>;
 }
 
 /**
@@ -130,45 +161,98 @@ export interface DealContactInput {
 
 /**
  * Parameters for creating a deal
+ *
+ * **Customer Linking Options** (use only one approach):
+ * - `customerId` - Link to an existing customer by ID
+ * - `customer` - Create/update a customer inline (matches by domain or shopifyDomain)
+ * - `domain`/`shopifyDomain` alone - Find or create a customer by domain
+ *
+ * Note: `domain` and `shopifyDomain` can be provided alongside `customerId` or `customer`
+ * to update the customer's domain fields if they are not already set.
+ *
+ * **Contact Linking Options** (use only one approach):
+ * - `contactIds` - Link to existing contacts by their IDs
+ * - `contacts` - Create/update contacts inline (matches by email)
  */
 export interface DealCreateParams {
+  /** The name of the deal */
   name: string;
+  /** The monetary value of the deal */
   amount?: number;
+  /** The currency code for the deal amount (e.g., 'USD', 'EUR') */
   amountCurrencyCode?: string;
+  /** The channel through which the deal was acquired */
   acquisitionChannel?: string;
+  /** The specific source of the deal acquisition */
   acquisitionSource?: string;
+  /** The timestamp of the first interaction with the prospect */
   firstInteractionAt?: string;
+  /** The expected closing date for the deal */
   closingAt?: string;
+  /** The actual closing date for the deal */
   closedAt?: string;
+  /** The ID of the deal flow */
   dealFlowId?: string;
+  /** The ID of the deal stage within the flow */
   dealStageId?: string;
-  /** The ID of an existing customer (alternative to customer object) */
+  /**
+   * Link to an existing customer by ID.
+   * Cannot be used together with `customer` object.
+   */
   customerId?: string;
   /**
-   * Create or update a customer inline (alternative to customerId).
-   * Matches existing customers by domain or shopifyDomain.
+   * Create or update a customer inline.
+   * Matches existing customers by `domain` or `shopifyDomain`.
+   * Cannot be used together with `customerId`.
    */
   customer?: DealCustomerInput;
+  /**
+   * The domain of the customer (e.g., 'acme.com').
+   * URLs are automatically normalized (protocol and path stripped).
+   * Used to find/create a customer if no `customerId` or `customer` provided,
+   * or to update the customer's domain if not already set.
+   */
   domain?: string;
+  /**
+   * The Shopify domain of the customer (e.g., 'acme.myshopify.com').
+   * URLs are automatically normalized (protocol and path stripped).
+   * Used to find/create a customer if no `customerId` or `customer` provided,
+   * or to update the customer's shopifyDomain if not already set.
+   */
   shopifyDomain?: string;
+  /** The ID of the company to associate with the deal */
   companyId?: string;
+  /** The ID of the app to associate with the deal */
   appId?: string;
+  /** The ID of the plan to associate with the deal */
   planId?: string;
+  /** Array of user IDs to assign as deal owners */
   ownerIds?: string[];
-  /** Array of existing contact IDs (alternative to contacts array) */
+  /**
+   * Link to existing contacts by their IDs.
+   * Cannot be used together with `contacts` array.
+   */
   contactIds?: string[];
   /**
-   * Create or update contacts inline (alternative to contactIds).
-   * Matches existing contacts by email. Contacts are linked to both the customer and the deal.
+   * Create or update contacts inline.
+   * Matches existing contacts by email.
+   * Contacts are automatically linked to both the customer and the deal.
+   * Cannot be used together with `contactIds`.
    */
   contacts?: DealContactInput[];
+  /** Additional notes about the deal */
   notes?: string;
+  /** The ID of the affiliate to associate with the deal */
   affiliateId?: string;
+  /** The ID of the partnership to associate with the deal */
   partnershipId?: string;
 }
 
 /**
  * Parameters for updating a deal
+ *
+ * All fields are optional. See {@link DealCreateParams} for detailed documentation
+ * on customer and contact linking options.
  */
 export interface DealUpdateParams extends Partial<DealCreateParams> {}
 
