@@ -40,153 +40,800 @@ const client = new MantleCoreClient({
 });
 ```
 
+## Middleware
+
+The client supports Koa-style middleware for intercepting requests and responses. Middleware can be used for logging, authentication refresh, retry logic, and more.
+
+### Creating Custom Middleware
+
+```typescript
+import { MantleCoreClient, type Middleware } from '@heymantle/core-api-client';
+
+// Logging middleware
+const loggingMiddleware: Middleware = async (ctx, next) => {
+  const start = Date.now();
+  console.log(`[Request] ${ctx.request.method} ${ctx.request.url}`);
+
+  await next();
+
+  const duration = Date.now() - start;
+  console.log(`[Response] ${ctx.response?.status} (${duration}ms)`);
+};
+
+// Register middleware
+const client = new MantleCoreClient({ apiKey: 'your-api-key' });
+client.use(loggingMiddleware, { name: 'logging', priority: 10 });
+```
+
+### Auth Refresh Middleware
+
+Automatically refresh expired access tokens:
+
+```typescript
+import { MantleCoreClient, createAuthRefreshMiddleware } from '@heymantle/core-api-client';
+
+const client = new MantleCoreClient({
+  accessToken: 'initial-token',
+});
+
+client.use(
+  createAuthRefreshMiddleware({
+    refreshToken: async () => {
+      // Call your token refresh endpoint
+      const response = await fetch('/api/refresh', { method: 'POST' });
+      const data = await response.json();
+      return data.accessToken;
+    },
+    onRefreshSuccess: (newToken) => {
+      // Persist the new token
+      localStorage.setItem('accessToken', newToken);
+    },
+    onRefreshFailed: (error) => {
+      // Redirect to login
+      window.location.href = '/login';
+    },
+    maxRefreshAttempts: 1,
+  }),
+  { name: 'auth-refresh' }
+);
+```
+
+### Middleware at Construction
+
+```typescript
+const client = new MantleCoreClient({
+  apiKey: 'your-api-key',
+  middleware: [
+    loggingMiddleware,
+    [retryMiddleware, { name: 'retry', priority: 5 }],
+  ],
+});
+```
+
+### Middleware Context
+
+```typescript
+interface MiddlewareContext<T = unknown> {
+  request: {
+    url: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    headers: Record<string, string>;
+    body?: string;
+    endpoint: string;
+  };
+  response?: {
+    data: T;
+    status: number;
+    headers: Headers;
+  };
+  error?: Error;
+  retry: boolean;           // Set to true to retry the request
+  retryCount: number;
+  maxRetries: number;
+  updateAuth: (credentials: { apiKey?: string; accessToken?: string }) => void;
+}
+```
+
 ## Resources
 
 ### Customers
 
 ```typescript
 // List customers with filters
-const { customers } = await client.customers.list({
+const { customers, hasNextPage, total } = await client.customers.list({
   take: 25,
   search: 'acme',
   appIds: ['app_123'],
+  shopifyShopDomain: 'store.myshopify.com',
+  shopifyShopId: '12345',
+  includeUsageMetrics: true,
+  includeContactCount: true,
+  sort: 'createdAt',
+  sortDirection: 'desc',
+});
+
+// Retrieve a customer
+const { customer } = await client.customers.retrieve('cust_123', {
+  includeContactCount: true,
+  includeCurrentInvoice: true,
 });
 
 // Create a customer
 const { customer } = await client.customers.create({
   name: 'Acme Inc',
   email: 'contact@acme.com',
-  tags: ['enterprise'],
+  domain: 'acme.com',
+  shopifyDomain: 'acme.myshopify.com',
+  shopifyShopId: '12345',
+  countryCode: 'US',
+  preferredCurrency: 'USD',
+  description: 'Enterprise customer',
+  tags: ['enterprise', 'priority'],
+  customFields: { industry: 'Technology', employees: 500 },
+  companyId: 'company_123',
+  appInstallations: [
+    { appId: 'app_123', installedAt: '2024-01-15T00:00:00Z', test: false },
+  ],
 });
 
 // Update a customer
 const { customer } = await client.customers.update('cust_123', {
   name: 'Acme Corporation',
+  tags: ['enterprise', 'vip'],
 });
 
 // Add/remove tags
-await client.customers.addTags('cust_123', ['premium']);
+await client.customers.addTags('cust_123', ['premium', 'partner']);
 await client.customers.removeTags('cust_123', ['trial']);
 
-// Get customer timeline
-const { events } = await client.customers.getTimeline('cust_123');
+// Timeline events
+const { events, hasNextPage } = await client.customers.getTimeline('cust_123', {
+  appId: 'app_123',
+  type: 'subscription.created',
+  limit: 50,
+  cursor: 'cursor_abc',
+});
+
+// Account owners
+const { accountOwners } = await client.customers.listAccountOwners('cust_123');
+const { accountOwner } = await client.customers.addAccountOwner('cust_123', {
+  email: 'owner@acme.com',
+  name: 'John Owner',
+});
+await client.customers.removeAccountOwner('cust_123', 'owner_123');
+
+// Custom fields
+const { customFields } = await client.customers.listCustomFields({ appId: 'app_123' });
+const { customField } = await client.customers.createCustomField({
+  appId: 'app_123',
+  name: 'Industry',
+  type: 'select', // 'string' | 'number' | 'boolean' | 'date' | 'select'
+  options: ['Technology', 'Healthcare', 'Finance', 'Retail'],
+  defaultValue: 'Technology',
+  showOnCustomerDetail: true,
+  filterable: true,
+  private: false,
+});
+const { customField } = await client.customers.retrieveCustomField('field_123');
+const { customField } = await client.customers.updateCustomField('field_123', {
+  name: 'Industry Type',
+  options: ['Technology', 'Healthcare', 'Finance', 'Retail', 'Other'],
+});
+await client.customers.deleteCustomField('field_123');
 ```
 
 ### Contacts
 
 ```typescript
-const { contacts } = await client.contacts.list();
+// List contacts
+const { contacts, hasNextPage } = await client.contacts.list({
+  take: 25,
+  search: 'john',
+  socialProfileType: 'linkedin', // 'linkedin' | 'x' | 'facebook' | 'instagram' | 'website'
+  socialProfileUrl: 'https://linkedin.com/in/johndoe',
+});
+
+// Create a contact with social profiles
 const { contact } = await client.contacts.create({
   name: 'John Doe',
-  email: 'john@example.com',
+  email: 'john@acme.com',
+  phone: '+1-555-123-4567',
+  jobTitle: 'CTO',
+  notes: 'Primary technical contact',
+  tags: ['decision-maker', 'technical'],
+  customers: ['cust_123', 'cust_456'],
+  socialProfiles: [
+    { key: 'linkedin', value: 'https://linkedin.com/in/johndoe' },
+    { key: 'x', value: 'https://x.com/johndoe' },
+    { key: 'website', value: 'https://johndoe.com' },
+  ],
 });
+
+// Update a contact
+const { contact } = await client.contacts.update('contact_123', {
+  jobTitle: 'VP of Engineering',
+  socialProfiles: [
+    { key: 'linkedin', value: 'https://linkedin.com/in/johndoe-updated' },
+  ],
+});
+
+// Retrieve a contact
+const { contact } = await client.contacts.retrieve('contact_123');
 ```
 
 ### Subscriptions
 
 ```typescript
-const { subscriptions } = await client.subscriptions.list({
+// List subscriptions
+const { subscriptions, hasNextPage } = await client.subscriptions.list({
   appId: 'app_123',
+  customerId: 'cust_123',
   active: true,
+  ids: ['sub_123', 'sub_456'],
+  startDate: '2024-01-01',
+  endDate: '2024-12-31',
 });
+
+// Retrieve a subscription
 const { subscription } = await client.subscriptions.retrieve('sub_123');
-```
-
-### Apps & Plans
-
-```typescript
-// List apps
-const { apps } = await client.apps.list();
-
-// List plans for an app
-const { plans } = await client.apps.listPlans('app_123');
-
-// Create a plan
-const { plan } = await client.apps.createPlan('app_123', {
-  name: 'Pro Plan',
-  amount: 2900,
-  currencyCode: 'USD',
-  interval: 'month',
-});
-
-// Manage features
-const { features } = await client.apps.listFeatures('app_123');
-const { feature } = await client.apps.createFeature('app_123', {
-  name: 'API Access',
-  type: 'boolean',
-});
 ```
 
 ### Deals
 
+Deals support multiple ways to link customers and contacts:
+
 ```typescript
-const { deals } = await client.deals.list({
+// List deals with filters
+const { deals, hasNextPage, total } = await client.deals.list({
   customerId: 'cust_123',
+  appId: 'app_123',
+  planId: 'plan_123',
+  dealStageId: 'stage_123',
+  dealFlowId: 'flow_123',
+  affiliateId: 'aff_123',
+  partnershipId: 'partner_123',
+  acquirerId: 'user_123',
+  ownerId: 'user_456',
+  contactId: 'contact_123',
   stage: 'negotiation',
+  minAmount: 1000,
+  maxAmount: 50000,
+  acquisitionChannel: 'inbound',
+  acquisitionSource: 'website',
+  includeArchived: false,
 });
 
+// Create a deal - Option 1: Link existing customer
 const { deal } = await client.deals.create({
   name: 'Enterprise Deal',
   amount: 50000,
+  amountCurrencyCode: 'USD',
   customerId: 'cust_123',
+  contactIds: ['contact_123', 'contact_456'],
+  dealFlowId: 'flow_123',
+  dealStageId: 'stage_123',
+  appId: 'app_123',
+  planId: 'plan_456',
+  ownerIds: ['user_123'],
+  acquisitionChannel: 'outbound',
+  acquisitionSource: 'sales_call',
+  firstInteractionAt: '2024-01-15T10:00:00Z',
+  closingAt: '2024-03-01T00:00:00Z',
+  notes: 'High priority enterprise deal',
 });
+
+// Create a deal - Option 2: Create/update customer inline
+const { deal } = await client.deals.create({
+  name: 'New Prospect Deal',
+  amount: 25000,
+  // Customer will be matched by domain or created if not found
+  customer: {
+    name: 'Acme Corp',
+    email: 'info@acme.com',
+    domain: 'acme.com',
+    shopifyDomain: 'acme.myshopify.com',
+    shopifyShopId: '12345',
+    tags: ['prospect'],
+    countryCode: 'US',
+    preferredCurrency: 'USD',
+  },
+  // Contacts will be matched by email or created if not found
+  contacts: [
+    {
+      email: 'john@acme.com',
+      name: 'John Doe',
+      phone: '+1-555-123-4567',
+      jobTitle: 'CEO',
+      label: 'primary',
+      notes: 'Decision maker',
+      tags: ['executive'],
+    },
+    {
+      email: 'jane@acme.com',
+      name: 'Jane Smith',
+      jobTitle: 'CTO',
+      label: 'technical',
+    },
+  ],
+  dealFlowId: 'flow_123',
+  dealStageId: 'stage_123',
+});
+
+// Create a deal - Option 3: Find/create customer by domain
+const { deal } = await client.deals.create({
+  name: 'Domain-based Deal',
+  shopifyDomain: 'newstore.myshopify.com',
+  dealFlowId: 'flow_123',
+  dealStageId: 'stage_123',
+});
+
+// Update a deal
+const { deal } = await client.deals.update('deal_123', {
+  amount: 75000,
+  dealStageId: 'stage_456',
+  closedAt: '2024-02-15T00:00:00Z',
+  notes: 'Deal closed successfully!',
+});
+
+// Archive a deal
+await client.deals.del('deal_123');
+
+// Get deal timeline
+const { events } = await client.deals.getTimeline('deal_123');
+
+// Get deal events
+const { events } = await client.deals.getEvents('deal_123');
+```
+
+### Deal Flows
+
+Manage deal pipelines and stages:
+
+```typescript
+// List deal flows
+const { dealFlows } = await client.dealFlows.list();
+
+// Retrieve a deal flow with stages
+const { dealFlow } = await client.dealFlows.retrieve('flow_123');
+// dealFlow.stages contains the ordered stages
+
+// Create a deal flow
+const { dealFlow } = await client.dealFlows.create({
+  name: 'Enterprise Sales Pipeline',
+  description: 'For deals over $10k',
+});
+
+// Update a deal flow
+const { dealFlow } = await client.dealFlows.update('flow_123', {
+  name: 'Enterprise Sales Pipeline v2',
+});
+
+// Delete a deal flow
+await client.dealFlows.del('flow_123');
+```
+
+### Deal Activities
+
+Track activities within deal flows:
+
+```typescript
+// List deal activities
+const { dealActivities } = await client.dealActivities.list();
+
+// Retrieve a deal activity
+const { dealActivity } = await client.dealActivities.retrieve('activity_123');
+
+// Create a deal activity
+const { dealActivity } = await client.dealActivities.create({
+  name: 'Initial Call',
+  dealFlowId: 'flow_123',
+  description: 'First discovery call with prospect',
+  order: 1,
+});
+
+// Update a deal activity
+const { dealActivity } = await client.dealActivities.update('activity_123', {
+  name: 'Discovery Call',
+  description: 'Updated description',
+});
+
+// Delete a deal activity
+await client.dealActivities.del('activity_123');
+```
+
+### Apps
+
+```typescript
+// List apps
+const { apps } = await client.apps.list({
+  minUpdatedAt: '2024-01-01T00:00:00Z',
+  maxUpdatedAt: '2024-12-31T23:59:59Z',
+});
+
+// Retrieve an app
+const { app } = await client.apps.retrieve('app_123');
+```
+
+### Plans
+
+```typescript
+// List plans for an app
+const { plans, total, hasMore } = await client.apps.listPlans('app_123', {
+  public: true,
+  page: 0,
+  perPage: 25,
+  search: 'pro',
+});
+
+// Retrieve a plan
+const { plan } = await client.apps.retrievePlan('app_123', 'plan_123');
+
+// Create a plan with usage charges and features
+const { plan } = await client.apps.createPlan('app_123', {
+  name: 'Pro Plan',
+  description: 'For growing businesses',
+  amount: 4900, // $49.00
+  currencyCode: 'USD',
+  interval: 'month', // 'month' | 'year' | 'one_time'
+  trialDays: 14,
+  public: true,
+  visible: true,
+  customerTags: ['premium'],
+  customerExcludeTags: ['churned'],
+  shopifyPlans: ['shopify', 'advanced'],
+  flexBilling: true,
+  flexBillingTerms: 'Charged at end of billing period',
+  // Usage-based pricing
+  planUsageCharges: [
+    {
+      usageMetricId: 'metric_123',
+      cappedAmount: 10000, // $100 cap
+      terms: '$0.01 per API call',
+      interval: 'month',
+    },
+  ],
+  // Feature flags
+  features: [
+    { featureId: 'feature_api', value: true },
+    { featureId: 'feature_seats', value: 10 },
+  ],
+  customFields: { tier: 'mid' },
+});
+
+// Update a plan
+const { plan } = await client.apps.updatePlan('app_123', 'plan_123', {
+  amount: 5900,
+  description: 'Updated description',
+});
+
+// Archive/unarchive a plan
+await client.apps.archivePlan('app_123', 'plan_123');
+await client.apps.unarchivePlan('app_123', 'plan_123');
+```
+
+### Features
+
+```typescript
+// List features
+const { features } = await client.apps.listFeatures('app_123');
+
+// Retrieve a feature
+const { feature } = await client.apps.retrieveFeature('app_123', 'feature_123');
+
+// Create a feature
+const { feature } = await client.apps.createFeature('app_123', {
+  name: 'API Access',
+  type: 'boolean', // 'boolean' | 'limit' | 'unlimited'
+  description: 'Access to REST API',
+  usageMetricId: 'metric_123', // Link to usage tracking
+});
+
+// Update a feature
+const { feature } = await client.apps.updateFeature('app_123', 'feature_123', {
+  name: 'API Access v2',
+  description: 'Updated description',
+});
+
+// Delete a feature
+await client.apps.deleteFeature('app_123', 'feature_123');
+```
+
+### Usage Metrics
+
+```typescript
+// List usage metrics
+const { usageMetrics } = await client.apps.listUsageMetrics('app_123');
+
+// Retrieve a usage metric
+const { usageMetric } = await client.apps.retrieveUsageMetric('app_123', 'metric_123');
+
+// Create a usage metric
+const { usageMetric } = await client.apps.createUsageMetric('app_123', {
+  name: 'API Calls',
+  description: 'Number of API requests',
+  eventName: 'api_call',
+  aggregationType: 'count',
+});
+
+// Update a usage metric
+const { usageMetric } = await client.apps.updateUsageMetric('app_123', 'metric_123', {
+  name: 'API Requests',
+});
+
+// Delete a usage metric
+await client.apps.deleteUsageMetric('app_123', 'metric_123');
+
+// Get event names for an app
+const { eventNames } = await client.apps.listEventNames('app_123');
+
+// Get property keys for an event
+const { propertyKeys } = await client.apps.listPropertyKeys('app_123', 'api_call');
+```
+
+### App Events
+
+```typescript
+// List app events
+const { appEvents, hasNextPage } = await client.apps.listAppEvents('app_123', {
+  customerId: 'cust_123',
+  take: 50,
+});
+```
+
+### Reviews
+
+```typescript
+// List reviews
+const { reviews } = await client.apps.listReviews('app_123');
+
+// Retrieve a review
+const { review } = await client.apps.retrieveReview('app_123', 'review_123');
+
+// Create a review
+const { review } = await client.apps.createReview('app_123', {
+  rating: 5,
+  title: 'Excellent app!',
+  body: 'This app transformed our workflow.',
+});
+
+// Update a review
+const { review } = await client.apps.updateReview('app_123', 'review_123', {
+  rating: 4,
+  body: 'Updated review text',
+});
+
+// Delete a review
+await client.apps.deleteReview('app_123', 'review_123');
 ```
 
 ### Tickets
 
 ```typescript
-const { tickets } = await client.tickets.list({
-  status: 'open',
-  priority: 'high',
+// List tickets with filters
+const { tickets, hasNextPage, total } = await client.tickets.list({
+  status: 'open', // 'open' | 'pending' | 'resolved' | 'closed'
+  priority: 'high', // 'low' | 'medium' | 'high' | 'urgent'
+  assignedToId: 'user_123',
+  appId: 'app_123',
+  customerId: 'cust_123',
+  contactId: 'contact_123',
+  channelId: 'channel_123',
+  tags: ['billing', 'urgent'],
+  take: 25,
 });
 
+// Retrieve a ticket
+const { ticket } = await client.tickets.retrieve('ticket_123');
+
+// Create a ticket - Option 1: Link existing contact
 const { ticket } = await client.tickets.create({
   subject: 'Need help with integration',
+  status: 'open',
+  priority: 'medium',
   customerId: 'cust_123',
+  contactId: 'contact_123',
+  appId: 'app_123',
+  channelId: 'channel_123',
+  assignedToId: 'user_123',
+  tags: ['integration', 'api'],
 });
 
-// Add a message
-const { message } = await client.tickets.createMessage('ticket_123', {
-  body: 'Here is the solution...',
-  from: 'agent',
+// Create a ticket - Option 2: Create contact inline
+const { ticket } = await client.tickets.create({
+  subject: 'Billing question',
+  priority: 'high',
+  customerId: 'cust_123',
+  contact: {
+    email: 'support-requester@acme.com',
+    name: 'Support User',
+  },
 });
+
+// Update a ticket
+const { ticket } = await client.tickets.update('ticket_123', {
+  status: 'pending',
+  priority: 'urgent',
+  assignedToId: 'user_456',
+  tags: ['escalated'],
+});
+
+// Delete a ticket
+await client.tickets.del('ticket_123');
+
+// List messages for a ticket
+const { messages } = await client.tickets.listMessages('ticket_123');
+
+// Retrieve a message
+const { message } = await client.tickets.retrieveMessage('ticket_123', 'message_123');
+
+// Create a message with attachments
+const { message } = await client.tickets.createMessage('ticket_123', {
+  body: 'Here is the solution to your problem...',
+  from: 'agent', // 'customer' | 'agent'
+  attachments: [
+    {
+      filename: 'solution.pdf',
+      url: 'https://storage.example.com/solution.pdf',
+      contentType: 'application/pdf',
+      size: 102400,
+    },
+  ],
+});
+
+// Update a message
+const { message } = await client.tickets.updateMessage('ticket_123', 'message_123', {
+  body: 'Updated message content',
+});
+
+// Delete a message
+await client.tickets.deleteMessage('ticket_123', 'message_123');
+```
+
+### Channels
+
+Manage CX channels for tickets:
+
+```typescript
+// List channels
+const { channels } = await client.channels.list({
+  type: 'email', // 'email' | 'chat'
+});
+
+// Create a channel
+const { channel } = await client.channels.create({
+  type: 'email',
+  name: 'Support Email',
+});
+```
+
+### Agents
+
+List support agents:
+
+```typescript
+// List agents
+const { agents } = await client.agents.list();
 ```
 
 ### Metrics
 
+Retrieve analytics and business metrics:
+
 ```typescript
-// Get MRR
+import type { DateRangeType } from '@heymantle/core-api-client';
+
+// Date range options:
+// 'last_30_minutes' | 'last_60_minutes' | 'last_12_hours' | 'last_24_hours'
+// 'last_7_days' | 'last_14_days' | 'last_30_days' | 'last_90_days'
+// 'last_12_months' | 'last_24_months'
+// 'today' | 'yesterday' | 'last_month'
+// 'month_to_date' | 'quarter_to_date' | 'year_to_date'
+// 'all_time' | 'custom'
+
+// Monthly Recurring Revenue
 const mrr = await client.metrics.mrr({
   appId: 'app_123',
   dateRange: 'last_30_days',
 });
+console.log(mrr.total, mrr.formattedTotal); // 50000, "$500.00"
+console.log(mrr.change, mrr.changePercentage); // 5000, 10
 
-// Get ARR
+// Annual Recurring Revenue
 const arr = await client.metrics.arr({ appId: 'app_123' });
 
-// Other metrics
+// Average Revenue Per User
 const arpu = await client.metrics.arpu({ appId: 'app_123' });
-const churn = await client.metrics.revenueChurn({ appId: 'app_123' });
+
+// Customer Lifetime Value
 const ltv = await client.metrics.ltv({ appId: 'app_123' });
+
+// Predicted LTV
+const predictedLtv = await client.metrics.predictedLtv({ appId: 'app_123' });
+
+// Revenue Churn
+const revenueChurn = await client.metrics.revenueChurn({ appId: 'app_123' });
+
+// Logo (Customer) Churn
+const logoChurn = await client.metrics.logoChurn({ appId: 'app_123' });
+
+// Revenue Retention
+const revenueRetention = await client.metrics.revenueRetention({ appId: 'app_123' });
+
+// Net Revenue Retention
 const nrr = await client.metrics.netRevenueRetention({ appId: 'app_123' });
+
+// Net Revenue
+const netRevenue = await client.metrics.netRevenue({ appId: 'app_123' });
+
+// Active Subscriptions
+const activeSubs = await client.metrics.activeSubscriptions({ appId: 'app_123' });
+
+// Active Installs
+const activeInstalls = await client.metrics.activeInstalls({ appId: 'app_123' });
+
+// Net Installs
+const netInstalls = await client.metrics.netInstalls({ appId: 'app_123' });
+
+// Charges
+const charges = await client.metrics.charges({ appId: 'app_123' });
+
+// Payout
+const payout = await client.metrics.payout({ appId: 'app_123' });
+
+// Usage event metrics
+const usageMetrics = await client.metrics.usageEvent({
+  appId: 'app_123',
+  eventName: 'api_call',
+  propertyKey: 'endpoint',
+  aggregation: 'count', // 'count' | 'sum' | 'avg' | 'min' | 'max'
+  dateRange: 'last_7_days',
+});
+
+// Usage metric by ID
+const metricData = await client.metrics.usageMetric({
+  appId: 'app_123',
+  metricId: 'metric_123',
+  dateRange: 'last_30_days',
+});
 
 // Custom metric query
 const data = await client.metrics.fetch({
   metric: 'PlatformApp.activeInstalls',
   appId: 'app_123',
   dateRange: 'last_90_days',
+  startDate: '2024-01-01',
+  endDate: '2024-03-31',
+  includes: ['includeTotal'],
+  appEventsForMrr: true,
 });
 ```
 
 ### Usage Events
 
+Track customer usage for billing:
+
 ```typescript
+// List usage events
+const { usageEvents, hasNextPage } = await client.usageEvents.list({
+  appId: 'app_123',
+  customerId: 'cust_123',
+  eventName: 'api_call',
+  billingStatus: 'unbilled',
+  countryCode: 'US',
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+  propertiesFilters: { endpoint: '/users' },
+});
+
 // Track a single event
 await client.usageEvents.create({
   eventName: 'api_call',
   customerId: 'cust_123',
   appId: 'app_123',
-  properties: { endpoint: '/users', method: 'GET' },
+  timestamp: new Date().toISOString(),
+  eventId: 'unique-event-id', // For deduplication
+  properties: { endpoint: '/users', method: 'GET', responseTime: 150 },
+  private: false,
 });
 
 // Track multiple events
@@ -194,6 +841,7 @@ await client.usageEvents.create({
   events: [
     { eventName: 'api_call', customerId: 'cust_123', appId: 'app_123' },
     { eventName: 'api_call', customerId: 'cust_456', appId: 'app_123' },
+    { eventName: 'file_upload', customerId: 'cust_123', appId: 'app_123', properties: { size: 1024 } },
   ],
 });
 ```
@@ -201,56 +849,341 @@ await client.usageEvents.create({
 ### Webhooks
 
 ```typescript
+// List webhooks
 const { webhooks } = await client.webhooks.list();
 
+// Retrieve a webhook
+const { webhook } = await client.webhooks.retrieve('webhook_123');
+
+// Create a webhook
 const { webhook } = await client.webhooks.create({
   topic: 'customer.created',
   address: 'https://your-app.com/webhooks',
 });
+
+// Update a webhook
+const { webhook } = await client.webhooks.update('webhook_123', {
+  address: 'https://your-app.com/webhooks/v2',
+});
+
+// Delete a webhook
+await client.webhooks.del('webhook_123');
 ```
 
 ### Affiliates
 
 ```typescript
-const { affiliates } = await client.affiliates.list({
-  status: 'active',
+// List affiliates
+const { affiliates, hasNextPage } = await client.affiliates.list({
+  affiliateProgramId: 'program_123',
+  status: 'active', // 'pending' | 'active' | 'rejected' | 'suspended'
+  appId: 'app_123',
+  email: 'affiliate@example.com',
 });
 
-const { affiliatePrograms } = await client.affiliatePrograms.list();
-const { commissions } = await client.affiliateCommissions.list();
-const { payouts } = await client.affiliatePayouts.list();
-const { referrals } = await client.affiliateReferrals.list();
+// Retrieve an affiliate
+const { affiliate } = await client.affiliates.retrieve('affiliate_123');
+
+// Update an affiliate
+const { affiliate } = await client.affiliates.update('affiliate_123', {
+  status: 'active',
+  commissionRate: 0.25, // 25%
+});
 ```
 
-### Other Resources
+### Affiliate Programs
 
 ```typescript
-// Current user & organization
-const { user, organization } = await client.me.retrieve();
-const { organization } = await client.organization.retrieve();
+// List affiliate programs
+const { affiliatePrograms } = await client.affiliatePrograms.list();
 
-// Users
-const { users } = await client.users.list();
+// Retrieve an affiliate program
+const { affiliateProgram } = await client.affiliatePrograms.retrieve('program_123');
 
-// Companies
-const { companies } = await client.companies.list();
+// Create an affiliate program
+const { affiliateProgram } = await client.affiliatePrograms.create({
+  name: 'Partner Program',
+  description: 'Earn 20% commission on referrals',
+  commissionType: 'percentage', // 'percentage' | 'fixed'
+  commissionValue: 20,
+  commissionDurationMonths: 12,
+  cookieDurationDays: 30,
+  minimumPayoutAmount: 5000, // $50.00
+  payoutCurrency: 'USD',
+  active: true,
+});
 
-// Customer segments
+// Update an affiliate program
+const { affiliateProgram } = await client.affiliatePrograms.update('program_123', {
+  commissionValue: 25,
+});
+
+// Delete an affiliate program
+await client.affiliatePrograms.del('program_123');
+```
+
+### Affiliate Commissions
+
+```typescript
+// List commissions
+const { commissions, hasNextPage } = await client.affiliateCommissions.list({
+  affiliateId: 'affiliate_123',
+  status: 'pending', // 'pending' | 'approved' | 'paid' | 'rejected'
+});
+
+// Retrieve a commission
+const { commission } = await client.affiliateCommissions.retrieve('commission_123');
+
+// Update a commission
+const { commission } = await client.affiliateCommissions.update('commission_123', {
+  status: 'approved',
+});
+```
+
+### Affiliate Payouts
+
+```typescript
+// List payouts
+const { payouts, hasNextPage } = await client.affiliatePayouts.list({
+  affiliateId: 'affiliate_123',
+  status: 'completed', // 'pending' | 'processing' | 'completed' | 'failed'
+});
+
+// Retrieve a payout
+const { payout } = await client.affiliatePayouts.retrieve('payout_123');
+
+// Create a payout
+const { payout } = await client.affiliatePayouts.create({
+  affiliateId: 'affiliate_123',
+  amount: 10000, // $100.00
+  currencyCode: 'USD',
+});
+```
+
+### Affiliate Referrals
+
+```typescript
+// List referrals
+const { referrals, hasNextPage } = await client.affiliateReferrals.list({
+  affiliateId: 'affiliate_123',
+  status: 'converted', // 'pending' | 'converted' | 'expired'
+});
+
+// Retrieve a referral
+const { referral } = await client.affiliateReferrals.retrieve('referral_123');
+```
+
+### Companies
+
+```typescript
+// List companies
+const { companies, hasNextPage } = await client.companies.list({
+  take: 25,
+  search: 'acme',
+});
+
+// Retrieve a company
+const { company } = await client.companies.retrieve('company_123');
+
+// Create a company
+const { company } = await client.companies.create({
+  name: 'Acme Holdings',
+  domain: 'acme.com',
+});
+
+// Update a company
+const { company } = await client.companies.update('company_123', {
+  name: 'Acme Holdings Inc',
+});
+
+// Delete a company
+await client.companies.del('company_123');
+```
+
+### Customer Segments
+
+```typescript
+// List customer segments
 const { customerSegments } = await client.customerSegments.list();
 
-// Tasks
-const { tasks } = await client.tasks.list({ status: 'pending' });
+// Retrieve a segment
+const { customerSegment } = await client.customerSegments.retrieve('segment_123');
 
-// Flows (automation)
+// Create a segment
+const { customerSegment } = await client.customerSegments.create({
+  name: 'Enterprise Customers',
+  filters: { lifetimeValue: { gte: 10000 } },
+});
+
+// Update a segment
+const { customerSegment } = await client.customerSegments.update('segment_123', {
+  name: 'Enterprise Customers (Updated)',
+});
+
+// Delete a segment
+await client.customerSegments.del('segment_123');
+```
+
+### Tasks
+
+```typescript
+// List tasks
+const { tasks, hasNextPage } = await client.tasks.list({
+  status: 'pending',
+  assignedToId: 'user_123',
+  customerId: 'cust_123',
+});
+
+// Retrieve a task
+const { task } = await client.tasks.retrieve('task_123');
+
+// Create a task
+const { task } = await client.tasks.create({
+  title: 'Follow up with customer',
+  description: 'Discuss renewal options',
+  dueAt: '2024-02-15T10:00:00Z',
+  assignedToId: 'user_123',
+  customerId: 'cust_123',
+});
+
+// Update a task
+const { task } = await client.tasks.update('task_123', {
+  status: 'completed',
+});
+
+// Delete a task
+await client.tasks.del('task_123');
+```
+
+### Flows (Automation)
+
+```typescript
+// List flows
 const { flows } = await client.flows.list();
 
-// Transactions & Charges
-const { transactions } = await client.transactions.list();
-const { charges } = await client.charges.list();
+// Retrieve a flow
+const { flow } = await client.flows.retrieve('flow_123');
 
-// Documentation
+// Create a flow
+const { flow } = await client.flows.create({
+  name: 'Onboarding Flow',
+  trigger: 'customer.created',
+  actions: [
+    { type: 'email', template: 'welcome' },
+  ],
+});
+
+// Update a flow
+const { flow } = await client.flows.update('flow_123', {
+  name: 'Updated Onboarding Flow',
+  enabled: true,
+});
+
+// Delete a flow
+await client.flows.del('flow_123');
+```
+
+### Transactions & Charges
+
+```typescript
+// List transactions
+const { transactions, hasNextPage } = await client.transactions.list({
+  customerId: 'cust_123',
+  appId: 'app_123',
+});
+
+// Retrieve a transaction
+const { transaction } = await client.transactions.retrieve('txn_123');
+
+// List charges
+const { charges, hasNextPage } = await client.charges.list({
+  customerId: 'cust_123',
+  appId: 'app_123',
+});
+
+// Retrieve a charge
+const { charge } = await client.charges.retrieve('charge_123');
+```
+
+### Users
+
+```typescript
+// List users in the organization
+const { users } = await client.users.list();
+
+// Retrieve a user
+const { user } = await client.users.retrieve('user_123');
+```
+
+### Me & Organization
+
+```typescript
+// Get current user and organization
+const { user, organization } = await client.me.retrieve();
+
+// Get organization details
+const { organization } = await client.organization.retrieve();
+```
+
+### Documentation
+
+```typescript
+// List documentation collections
 const { collections } = await client.docs.listCollections();
-const { pages } = await client.docs.listPages();
+
+// Retrieve a collection
+const { collection } = await client.docs.retrieveCollection('collection_123');
+
+// List documentation pages
+const { pages } = await client.docs.listPages({
+  collectionId: 'collection_123',
+});
+
+// Retrieve a page
+const { page } = await client.docs.retrievePage('page_123');
+
+// Create a page
+const { page } = await client.docs.createPage({
+  title: 'Getting Started',
+  content: '# Getting Started\n\nWelcome to our docs...',
+  collectionId: 'collection_123',
+});
+
+// Update a page
+const { page } = await client.docs.updatePage('page_123', {
+  content: 'Updated content',
+});
+
+// Delete a page
+await client.docs.deletePage('page_123');
+```
+
+### Entities
+
+Generic entity management:
+
+```typescript
+// List entities
+const { entities } = await client.entities.list({
+  type: 'custom_entity',
+});
+
+// Retrieve an entity
+const { entity } = await client.entities.retrieve('entity_123');
+
+// Create an entity
+const { entity } = await client.entities.create({
+  type: 'custom_entity',
+  data: { field1: 'value1' },
+});
+
+// Update an entity
+const { entity } = await client.entities.update('entity_123', {
+  data: { field1: 'updated_value' },
+});
+
+// Delete an entity
+await client.entities.del('entity_123');
 ```
 
 ## Pagination
@@ -261,10 +1194,13 @@ All list methods return pagination metadata:
 const { customers, hasNextPage, hasPreviousPage, cursor, total } =
   await client.customers.list({ take: 25 });
 
-// Fetch next page
+// Cursor-based pagination (recommended)
 if (hasNextPage) {
   const nextPage = await client.customers.list({ take: 25, cursor });
 }
+
+// Offset-based pagination
+const page2 = await client.customers.list({ take: 25, page: 1 });
 ```
 
 ## Error Handling
@@ -283,17 +1219,19 @@ try {
 } catch (error) {
   if (error instanceof MantleAuthenticationError) {
     // Handle authentication error (401)
+    console.log('Please re-authenticate');
   } else if (error instanceof MantlePermissionError) {
     // Handle permission error (403)
+    console.log('Access denied');
   } else if (error instanceof MantleValidationError) {
     // Handle validation error (422)
-    console.log(error.details);
+    console.log('Validation failed:', error.details);
   } else if (error instanceof MantleRateLimitError) {
     // Handle rate limit (429)
-    console.log(`Retry after: ${error.retryAfter}s`);
+    console.log(`Rate limited. Retry after: ${error.retryAfter}s`);
   } else if (error instanceof MantleAPIError) {
     // Handle other API errors
-    console.log(error.statusCode, error.message);
+    console.log(`Error ${error.statusCode}: ${error.message}`);
   }
 }
 ```
@@ -304,28 +1242,85 @@ All types are exported for use in your application:
 
 ```typescript
 import type {
+  // Client config
+  MantleCoreClientConfig,
+
+  // Entities
   Customer,
-  CustomerCreateParams,
+  Contact,
   Deal,
   Subscription,
+  Ticket,
+  TicketMessage,
+  App,
+  Plan,
+  Feature,
+  Affiliate,
+  AffiliateProgram,
+  AffiliateCommission,
+  AffiliatePayout,
+  AffiliateReferral,
+
+  // Params
+  CustomerCreateParams,
+  CustomerUpdateParams,
+  CustomerListParams,
+  DealCreateParams,
+  DealCustomerInput,
+  DealContactInput,
+  TicketCreateParams,
+  PlanCreateParams,
+
+  // Responses
+  CustomerListResponse,
+  DealListResponse,
   MetricsResponse,
-  // ... and many more
+  PaginatedResponse,
+
+  // Enums/Types
+  DateRangeType,
+  MetricType,
+  SocialProfileType,
+
+  // Middleware
+  Middleware,
+  MiddlewareContext,
+  MiddlewareOptions,
 } from '@heymantle/core-api-client';
 ```
 
 ## Configuration Options
 
 ```typescript
+import { MantleCoreClient, type Middleware } from '@heymantle/core-api-client';
+
 const client = new MantleCoreClient({
   // Required: one of apiKey or accessToken
   apiKey: 'your-api-key',
+  // OR
+  accessToken: 'your-oauth-token',
 
   // Optional: custom base URL (defaults to https://api.heymantle.com/v1)
   baseURL: 'https://api.heymantle.com/v1',
 
   // Optional: request timeout in ms (defaults to 30000)
   timeout: 30000,
+
+  // Optional: middleware to register on instantiation
+  middleware: [
+    loggingMiddleware,
+    [authRefreshMiddleware, { name: 'auth', priority: 1 }],
+  ],
 });
+
+// Update authentication at runtime
+client.updateAuth({ accessToken: 'new-token' });
+
+// Add middleware at runtime
+client.use(newMiddleware, { name: 'custom', priority: 50 });
+
+// Remove middleware by name
+client.removeMiddleware('custom');
 ```
 
 ## License
