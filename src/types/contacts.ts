@@ -33,6 +33,7 @@ export interface Contact {
   customers?: Array<{
     id: string;
     name?: string;
+    label?: string;
   }>;
   createdAt: string;
   updatedAt: string;
@@ -65,7 +66,7 @@ export interface ContactCreateParams {
   jobTitle?: string;
   notes?: string;
   tags?: string[];
-  customers?: string[] | Array<{ id: string; name?: string }>;
+  customers?: string[] | Array<{ id: string; label?: string }>;
   socialProfiles?: SocialProfile[];
 }
 
