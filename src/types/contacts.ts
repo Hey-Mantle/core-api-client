@@ -1,14 +1,14 @@
-import type { ListParams, PaginatedResponse } from './common';
+import type { ListParams, PaginatedResponse } from "./common";
 
 /**
  * Valid social profile types
  */
 export type SocialProfileType =
-  | 'linkedin'
-  | 'x'
-  | 'facebook'
-  | 'instagram'
-  | 'website';
+  | "linkedin"
+  | "x"
+  | "facebook"
+  | "instagram"
+  | "website";
 
 /**
  * Social profile for a contact
@@ -65,7 +65,7 @@ export interface ContactCreateParams {
   jobTitle?: string;
   notes?: string;
   tags?: string[];
-  customers?: string[];
+  customers?: string[] | Array<{ id: string; name?: string }>;
   socialProfiles?: SocialProfile[];
 }
 
