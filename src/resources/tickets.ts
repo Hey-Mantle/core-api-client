@@ -8,6 +8,14 @@ import type {
   TicketMessage,
   TicketMessageCreateParams,
   TicketMessageUpdateParams,
+  TicketMessagesListParams,
+  TicketMessagesListResponse,
+  TicketMessageBulkInput,
+  TicketEvent,
+  TicketEventCreateParams,
+  TicketEventListParams,
+  TicketEventListResponse,
+  TicketEventBulkInput,
 } from '../types';
 import type { DeleteResponse } from '../types/common';
 
@@ -63,12 +71,22 @@ export class TicketsResource extends BaseResource {
   // ========== Messages ==========
 
   /**
-   * List messages for a ticket
+   * List messages for a ticket with optional pagination
    */
-  async listMessages(ticketId: string): Promise<{ messages: TicketMessage[] }> {
-    return this.get<{ messages: TicketMessage[] }>(
-      `/tickets/${ticketId}/messages`
+  async listMessages(
+    ticketId: string,
+    params?: TicketMessagesListParams
+  ): Promise<TicketMessagesListResponse> {
+    const response = await this.get<TicketMessagesListResponse>(
+      `/tickets/${ticketId}/messages`,
+      params
     );
+    return {
+      messages: response.messages || [],
+      hasNextPage: response.hasNextPage || false,
+      hasPreviousPage: response.hasPreviousPage || false,
+      cursor: response.cursor,
+    };
   }
 
   /**
@@ -119,6 +137,71 @@ export class TicketsResource extends BaseResource {
   ): Promise<DeleteResponse> {
     return this._delete<DeleteResponse>(
       `/tickets/${ticketId}/messages/${messageId}`
+    );
+  }
+
+  /**
+   * Bulk upsert messages for a ticket
+   * Messages with an id will be updated, messages without id will be created.
+   * Messages not included in the array will be deleted.
+   */
+  async bulkUpsertMessages(
+    ticketId: string,
+    messages: TicketMessageBulkInput[]
+  ): Promise<{ messages: TicketMessage[] }> {
+    return this.put<{ messages: TicketMessage[] }>(
+      `/tickets/${ticketId}/messages`,
+      messages
+    );
+  }
+
+  // ========== Events ==========
+
+  /**
+   * List events for a ticket
+   */
+  async listEvents(
+    ticketId: string,
+    params?: TicketEventListParams
+  ): Promise<TicketEventListResponse> {
+    const response = await this.get<TicketEventListResponse>(
+      `/tickets/${ticketId}/events`,
+      params
+    );
+    return {
+      events: response.events || [],
+      hasNextPage: response.hasNextPage || false,
+      hasPreviousPage: response.hasPreviousPage || false,
+      cursor: response.cursor,
+    };
+  }
+
+  /**
+   * Create an event for a ticket
+   * Events are idempotent. If a duplicate is detected, the existing event is returned.
+   */
+  async createEvent(
+    ticketId: string,
+    data: TicketEventCreateParams
+  ): Promise<{ event: TicketEvent }> {
+    return this.post<{ event: TicketEvent }>(
+      `/tickets/${ticketId}/events`,
+      data
+    );
+  }
+
+  /**
+   * Bulk upsert events for a ticket
+   * Events with an id will be updated, events without id will be created.
+   * Events not included in the array will be deleted.
+   */
+  async bulkUpsertEvents(
+    ticketId: string,
+    events: TicketEventBulkInput[]
+  ): Promise<{ events: TicketEvent[] }> {
+    return this.put<{ events: TicketEvent[] }>(
+      `/tickets/${ticketId}/events`,
+      events
     );
   }
 }

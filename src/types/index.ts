@@ -100,16 +100,34 @@ export type {
 
 // Ticket types
 export type {
+  // Core types
+  ActorType,
+  ContentType,
+  ThreadEventType,
+  InlineContact,
+  // Ticket entity
   Ticket,
   TicketListParams,
   TicketListResponse,
   TicketCreateParams,
   TicketUpdateParams,
   TicketContactData,
+  // Message types
   TicketMessage,
   TicketMessageCreateParams,
   TicketMessageUpdateParams,
+  TicketMessagesListParams,
+  TicketMessagesListResponse,
+  TicketMessageBulkInput,
   MessageAttachment,
+  TicketAttachmentInput,
+  // Event types
+  TicketEvent,
+  TicketEventCreateParams,
+  TicketEventBulkInput,
+  TicketEventListParams,
+  TicketEventListResponse,
+  // Channel types
   Channel,
   ChannelListParams,
   ChannelCreateParams,

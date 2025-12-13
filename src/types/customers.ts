@@ -77,6 +77,8 @@ export interface CustomerListParams extends ListParams {
   shopifyShopId?: string;
   includeUsageMetrics?: boolean;
   includeContactCount?: boolean;
+  /** Filter by email addresses (comma-separated CSV string) */
+  emails?: string;
 }
 
 /**

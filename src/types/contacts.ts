@@ -47,6 +47,8 @@ export interface ContactListParams extends ListParams {
   socialProfileType?: SocialProfileType;
   /** Filter by social profile URL */
   socialProfileUrl?: string;
+  /** Filter by email addresses (comma-separated CSV string) */
+  emails?: string;
 }
 
 /**
