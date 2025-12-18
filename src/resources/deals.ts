@@ -6,6 +6,9 @@ import type {
   DealCreateParams,
   DealUpdateParams,
   TimelineListResponse,
+  DealEventCreateParams,
+  DealEventListResponse,
+  DealEventCreateResponse,
 } from '../types';
 import type { DeleteResponse } from '../types/common';
 
@@ -125,7 +128,7 @@ export class DealsResource extends BaseResource {
   /**
    * Get deal activity timeline
    */
-  async getTimeline(dealId: string): Promise<TimelineListResponse> {
+  async timeline(dealId: string): Promise<TimelineListResponse> {
     const response = await this.get<TimelineListResponse>(
       `/deals/${dealId}/timeline`
     );
@@ -138,9 +141,42 @@ export class DealsResource extends BaseResource {
   }
 
   /**
-   * Get deal events
+   * List deal events
    */
-  async getEvents(dealId: string): Promise<{ events: unknown[] }> {
-    return this.get<{ events: unknown[] }>(`/deals/${dealId}/events`);
+  async listEvents(dealId: string): Promise<DealEventListResponse> {
+    const response = await this.get<DealEventListResponse>(
+      `/deals/${dealId}/events`
+    );
+    return {
+      events: response.events || [],
+      hasNextPage: response.hasNextPage || false,
+      hasPreviousPage: response.hasPreviousPage || false,
+      total: response.total,
+      cursor: response.cursor,
+    };
+  }
+
+  /**
+   * Create a deal event
+   *
+   * Creates an event on a deal. If `dealStageId` is provided, the deal will
+   * progress to that stage. If `dealActivityId` is provided and the activity
+   * is configured for a future stage, the deal will automatically progress.
+   *
+   * @example
+   * // Create a simple note
+   * await client.deals.createEvent('deal_123', { notes: 'Follow-up call completed' });
+   *
+   * // Create an event and progress to a new stage
+   * await client.deals.createEvent('deal_123', {
+   *   dealStageId: 'stage_456',
+   *   notes: 'Moving to negotiation phase',
+   * });
+   */
+  async createEvent(
+    dealId: string,
+    data: DealEventCreateParams
+  ): Promise<DealEventCreateResponse> {
+    return this.post<DealEventCreateResponse>(`/deals/${dealId}/events`, data);
   }
 }

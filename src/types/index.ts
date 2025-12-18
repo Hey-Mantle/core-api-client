@@ -96,6 +96,10 @@ export type {
   DealActivity,
   DealActivityCreateParams,
   DealActivityUpdateParams,
+  DealEvent,
+  DealEventCreateParams,
+  DealEventListResponse,
+  DealEventCreateResponse,
 } from './deals';
 
 // Ticket types

@@ -319,3 +319,77 @@ export interface DealActivityCreateParams {
  */
 export interface DealActivityUpdateParams
   extends Partial<Omit<DealActivityCreateParams, 'dealFlowId'>> {}
+
+/**
+ * Deal event entity
+ */
+export interface DealEvent {
+  id: string;
+  type: string;
+  notes?: string;
+  occurredAt: string;
+  user?: {
+    id: string;
+    name?: string;
+    email?: string;
+  } | null;
+  previousDealStage?: {
+    id: string;
+    name: string;
+  } | null;
+  dealStage?: {
+    id: string;
+    name: string;
+  } | null;
+  dealActivity?: {
+    id: string;
+    name: string;
+  } | null;
+  task?: {
+    id: string;
+    name?: string;
+  } | null;
+  appEvent?: {
+    id: string;
+  } | null;
+}
+
+/**
+ * Parameters for creating a deal event
+ */
+export interface DealEventCreateParams {
+  /** Notes or description for the event */
+  notes?: string;
+  /** Associated deal activity ID */
+  dealActivityId?: string;
+  /** Custom activity name (for ad-hoc activities not in the predefined list) */
+  customActivityName?: string;
+  /** Stage to progress the deal to */
+  dealStageId?: string;
+  /** Associated task ID */
+  taskId?: string;
+  /** Associated app event ID */
+  appEventId?: string;
+  /** When the event occurred (default: now) */
+  occurredAt?: string;
+  /** User ID who created the event (default: authenticated user) */
+  userId?: string;
+}
+
+/**
+ * Response from listing deal events
+ */
+export interface DealEventListResponse extends PaginatedResponse {
+  events: DealEvent[];
+}
+
+/**
+ * Response from creating a deal event
+ */
+export interface DealEventCreateResponse {
+  event: DealEvent;
+  /** Whether the deal was progressed to a new stage */
+  dealProgressed?: boolean;
+  /** The updated deal if progression occurred */
+  deal?: Deal;
+}
