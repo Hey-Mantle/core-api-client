@@ -60,4 +60,5 @@ export {
   AgentsResource,
   DocsResource,
   EntitiesResource,
+  CustomDataResource,
 } from './resources';

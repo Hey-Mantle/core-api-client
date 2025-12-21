@@ -198,6 +198,8 @@ export type {
   MeResponse,
   Agent,
   AgentListResponse,
+  AgentCreateParams,
+  AgentResponse,
 } from './organization';
 
 // Task types
@@ -250,3 +252,12 @@ export type {
   EntitiesSearchParams,
   EntitiesSearchResponse,
 } from './entities';
+
+// Custom data types
+export type {
+  CustomDataResourceType,
+  CustomDataSetParams,
+  CustomDataGetParams,
+  CustomDataResponse,
+  CustomDataDeleteParams,
+} from './custom-data';

@@ -68,3 +68,18 @@ export interface Agent {
 export interface AgentListResponse {
   agents: Agent[];
 }
+
+/**
+ * Parameters for creating an agent
+ */
+export interface AgentCreateParams {
+  email: string;
+  name?: string;
+}
+
+/**
+ * Response from creating/retrieving an agent
+ */
+export interface AgentResponse {
+  agent: Agent;
+}
