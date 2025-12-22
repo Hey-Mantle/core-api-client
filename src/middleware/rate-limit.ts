@@ -180,7 +180,8 @@ function calculateRetryDelay(
 
   if (retryAfter !== undefined && retryAfter > 0) {
     // Use the server-provided retry-after (convert from seconds to ms)
-    delay = retryAfter * 1000
+    // Don't apply jitter here - retryAfter is the minimum time to wait
+    return retryAfter * 1000
   } else if (options.exponentialBackoff) {
     // Exponential backoff: baseDelay * 2^retryCount
     delay = options.baseDelay * Math.pow(2, retryCount)
@@ -188,6 +189,7 @@ function calculateRetryDelay(
     delay = options.baseDelay
   }
 
+  // Only apply jitter to calculated delays, not server-provided retryAfter
   if (options.jitter) {
     // Add ±25% random jitter
     const jitterFactor = 0.75 + Math.random() * 0.5

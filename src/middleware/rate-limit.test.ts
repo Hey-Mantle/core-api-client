@@ -308,6 +308,35 @@ describe('createRateLimitMiddleware', () => {
       await expect(middleware(ctx, next)).rejects.toThrow('Some other error')
       expect(ctx.retry).toBe(false)
     })
+
+    it('does not apply jitter to server-provided retryAfter', async () => {
+      // This test verifies that when a server provides a retryAfter value,
+      // we wait exactly that amount (not less due to jitter)
+      const middleware = createRateLimitMiddleware({
+        enableRetry: true,
+        jitter: true, // Jitter enabled, but should not reduce below retryAfter
+      })
+      const ctx = createMockContext()
+      const error = new MantleRateLimitError('Rate limited', 5) // 5 seconds
+      const next = vi.fn().mockRejectedValue(error)
+
+      let resolved = false
+      const promise = middleware(ctx, next).then(() => {
+        resolved = true
+      })
+
+      // If jitter were applied incorrectly, delay could be as low as 3750ms (5000 * 0.75)
+      // We verify the request does NOT resolve before 5000ms
+      await vi.advanceTimersByTimeAsync(4500)
+      expect(resolved).toBe(false)
+
+      // Should resolve at exactly 5000ms (the server-specified time)
+      await vi.advanceTimersByTimeAsync(500)
+      await promise
+
+      expect(resolved).toBe(true)
+      expect(ctx.retry).toBe(true)
+    })
   })
 
   describe('with enableThrottle: true', () => {
