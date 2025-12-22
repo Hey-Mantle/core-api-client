@@ -14,3 +14,4 @@ export { MiddlewareManager } from './manager'
 
 // Built-in middleware
 export { createAuthRefreshMiddleware, type AuthRefreshOptions } from './auth-refresh'
+export { createRateLimitMiddleware, type RateLimitOptions } from './rate-limit'

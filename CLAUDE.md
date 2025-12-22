@@ -22,7 +22,8 @@ src/
 ├── middleware/        # Koa-style middleware system
 │   ├── types.ts       # Middleware interfaces
 │   ├── manager.ts     # MiddlewareManager class
-│   └── auth-refresh.ts # Token refresh middleware
+│   ├── auth-refresh.ts # Token refresh middleware
+│   └── rate-limit.ts  # Rate limit retry/throttle middleware
 └── utils/
     ├── errors.ts      # Custom error classes
     └── sanitize.ts    # Request sanitization
@@ -71,6 +72,28 @@ client.use(async (ctx, next) => {
   await next();
   // After response (ctx.response available)
 });
+```
+
+### Rate Limit Handling
+The API enforces rate limits: 1,000 requests/minute and 5,000 requests/5 minutes. Use the built-in middleware:
+
+```typescript
+import { createRateLimitMiddleware } from '@heymantle/core-api-client';
+
+// Auto-retry on 429 responses
+client.use(createRateLimitMiddleware({ enableRetry: true }));
+
+// Preemptive throttling to avoid hitting limits
+client.use(createRateLimitMiddleware({ enableThrottle: true }));
+
+// Both features with custom options
+client.use(createRateLimitMiddleware({
+  enableRetry: true,
+  enableThrottle: true,
+  maxRetries: 5,
+  requestsPerMinute: 500,
+  throttleThreshold: 0.8,
+}));
 ```
 
 ## Important Resources
