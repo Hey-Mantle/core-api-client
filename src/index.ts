@@ -18,6 +18,8 @@ export {
 export {
   createAuthRefreshMiddleware,
   type AuthRefreshOptions,
+  createRateLimitMiddleware,
+  type RateLimitOptions,
   type Middleware,
   type MiddlewareContext,
   type MiddlewareRequest,
