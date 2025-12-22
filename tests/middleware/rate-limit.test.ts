@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createRateLimitMiddleware, RateLimiter } from './rate-limit'
-import { MantleRateLimitError } from '../utils/errors'
-import type { MiddlewareContext } from './types'
+import { createRateLimitMiddleware, RateLimiter } from '../../src/middleware/rate-limit'
+import { MantleRateLimitError } from '../../src/utils/errors'
+import type { MiddlewareContext } from '../../src/middleware/types'
 
 // Helper to create a mock middleware context
 function createMockContext(overrides: Partial<MiddlewareContext> = {}): MiddlewareContext {
