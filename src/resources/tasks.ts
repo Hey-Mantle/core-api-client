@@ -73,8 +73,8 @@ export class TasksResource extends BaseResource {
   async retrieveTodoItem(
     taskId: string,
     itemId: string
-  ): Promise<{ item: TodoItem }> {
-    return this.get<{ item: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
+  ): Promise<{ todoItem: TodoItem }> {
+    return this.get<{ todoItem: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
   }
 
   /**
@@ -83,8 +83,8 @@ export class TasksResource extends BaseResource {
   async createTodoItem(
     taskId: string,
     data: TodoItemCreateParams
-  ): Promise<{ item: TodoItem }> {
-    return this.post<{ item: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
+  ): Promise<{ todoItem: TodoItem }> {
+    return this.post<{ todoItem: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
   }
 
   /**
@@ -94,8 +94,8 @@ export class TasksResource extends BaseResource {
     taskId: string,
     itemId: string,
     data: TodoItemUpdateParams
-  ): Promise<{ item: TodoItem }> {
-    return this.put<{ item: TodoItem }>(
+  ): Promise<{ todoItem: TodoItem }> {
+    return this.put<{ todoItem: TodoItem }>(
       `/tasks/${taskId}/todo-items/${itemId}`,
       data
     );

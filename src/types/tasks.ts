@@ -118,7 +118,7 @@ export interface TaskUpdateParams extends Partial<TaskCreateParams> {}
  * Response from listing todo items
  */
 export interface TodoItemListResponse {
-  items: TodoItem[];
+  todoItems: TodoItem[];
   total: number;
 }
 
