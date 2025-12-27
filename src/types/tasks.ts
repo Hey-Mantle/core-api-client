@@ -11,6 +11,27 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'canceled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 /**
+ * Task todo item entity
+ */
+export interface TodoItem {
+  id: string;
+  content: string;
+  completed: boolean;
+  completedAt?: string | null;
+  displayOrder: number;
+}
+
+/**
+ * Parameters for creating a todo item (used in task creation/update)
+ */
+export interface TodoItemInput {
+  id?: string;
+  content: string;
+  completed?: boolean;
+  displayOrder?: number;
+}
+
+/**
  * Task entity
  */
 export interface Task {
@@ -47,6 +68,7 @@ export interface Task {
     id: string;
     name?: string;
   };
+  todoItems?: TodoItem[];
 }
 
 /**
@@ -84,9 +106,36 @@ export interface TaskCreateParams {
   dealActivityId?: string;
   appInstallationId?: string;
   tags?: string[];
+  todoItems?: TodoItemInput[];
 }
 
 /**
  * Parameters for updating a task
  */
 export interface TaskUpdateParams extends Partial<TaskCreateParams> {}
+
+/**
+ * Response from listing todo items
+ */
+export interface TodoItemListResponse {
+  items: TodoItem[];
+  total: number;
+}
+
+/**
+ * Parameters for creating a todo item via the dedicated endpoint
+ */
+export interface TodoItemCreateParams {
+  content: string;
+  completed?: boolean;
+  displayOrder?: number;
+}
+
+/**
+ * Parameters for updating a todo item
+ */
+export interface TodoItemUpdateParams {
+  content?: string;
+  completed?: boolean;
+  displayOrder?: number;
+}

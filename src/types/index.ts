@@ -211,6 +211,11 @@ export type {
   TaskListResponse,
   TaskCreateParams,
   TaskUpdateParams,
+  TodoItem,
+  TodoItemInput,
+  TodoItemListResponse,
+  TodoItemCreateParams,
+  TodoItemUpdateParams,
 } from './tasks';
 
 // Company types
