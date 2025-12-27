@@ -5,6 +5,7 @@ import type {
   TaskListResponse,
   TaskCreateParams,
   TaskUpdateParams,
+  TaskUpdateResponse,
   TodoItem,
   TodoItemListResponse,
   TodoItemCreateParams,
@@ -40,15 +41,18 @@ export class TasksResource extends BaseResource {
   /**
    * Create a new task
    */
-  async create(data: TaskCreateParams): Promise<{ task: Task }> {
-    return this.post<{ task: Task }>('/tasks', data);
+  async create(data: TaskCreateParams): Promise<Task> {
+    return this.post<Task>('/tasks', data);
   }
 
   /**
    * Update an existing task
    */
-  async update(taskId: string, data: TaskUpdateParams): Promise<{ task: Task }> {
-    return this.put<{ task: Task }>(`/tasks/${taskId}`, data);
+  async update(
+    taskId: string,
+    data: TaskUpdateParams
+  ): Promise<TaskUpdateResponse> {
+    return this.put<TaskUpdateResponse>(`/tasks/${taskId}`, data);
   }
 
   /**
@@ -73,8 +77,8 @@ export class TasksResource extends BaseResource {
   async retrieveTodoItem(
     taskId: string,
     itemId: string
-  ): Promise<{ todoItem: TodoItem }> {
-    return this.get<{ todoItem: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
+  ): Promise<{ item: TodoItem }> {
+    return this.get<{ item: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
   }
 
   /**
@@ -83,8 +87,8 @@ export class TasksResource extends BaseResource {
   async createTodoItem(
     taskId: string,
     data: TodoItemCreateParams
-  ): Promise<{ todoItem: TodoItem }> {
-    return this.post<{ todoItem: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
+  ): Promise<{ item: TodoItem }> {
+    return this.post<{ item: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
   }
 
   /**
@@ -94,8 +98,8 @@ export class TasksResource extends BaseResource {
     taskId: string,
     itemId: string,
     data: TodoItemUpdateParams
-  ): Promise<{ todoItem: TodoItem }> {
-    return this.put<{ todoItem: TodoItem }>(
+  ): Promise<{ item: TodoItem }> {
+    return this.put<{ item: TodoItem }>(
       `/tasks/${taskId}/todo-items/${itemId}`,
       data
     );

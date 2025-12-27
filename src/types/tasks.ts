@@ -3,12 +3,12 @@ import type { ListParams, PaginatedResponse } from './common';
 /**
  * Task status
  */
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'canceled';
+export type TaskStatus = 'new' | 'in_progress' | 'complete';
 
 /**
  * Task priority
  */
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskPriority = 'low' | 'medium' | 'high';
 
 /**
  * Task todo item entity
@@ -42,6 +42,7 @@ export interface Task {
   priority: TaskPriority;
   status: TaskStatus;
   dueDate?: string;
+  completedAt?: string | null;
   assigneeId?: string;
   customerId?: string;
   contactId?: string;
@@ -55,19 +56,32 @@ export interface Task {
     id: string;
     name?: string;
     email?: string;
-  };
+  } | null;
+  createdBy?: {
+    id: string;
+    name?: string;
+    email?: string;
+  } | null;
   customer?: {
     id: string;
     name?: string;
-  };
+  } | null;
   contact?: {
     id: string;
     name?: string;
-  };
+  } | null;
   deal?: {
     id: string;
     name?: string;
-  };
+    dealStage?: {
+      id: string;
+      name?: string;
+    } | null;
+  } | null;
+  dealActivity?: {
+    id: string;
+    name?: string;
+  } | null;
   todoItems?: TodoItem[];
 }
 
@@ -118,8 +132,27 @@ export interface TaskUpdateParams extends Partial<TaskCreateParams> {}
  * Response from listing todo items
  */
 export interface TodoItemListResponse {
-  todoItems: TodoItem[];
+  items: TodoItem[];
   total: number;
+}
+
+/**
+ * Deal progression information returned when a task update triggers deal stage change
+ */
+export interface DealProgression {
+  dealId: string;
+  dealName: string;
+  previousStage: { id: string; name: string } | null;
+  nextStage: { id: string; name: string } | null;
+}
+
+/**
+ * Response from updating a task
+ */
+export interface TaskUpdateResponse {
+  task: Task;
+  dealProgressed: boolean;
+  dealProgression: DealProgression | null;
 }
 
 /**

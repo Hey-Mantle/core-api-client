@@ -211,6 +211,8 @@ export type {
   TaskListResponse,
   TaskCreateParams,
   TaskUpdateParams,
+  TaskUpdateResponse,
+  DealProgression,
   TodoItem,
   TodoItemInput,
   TodoItemListResponse,
