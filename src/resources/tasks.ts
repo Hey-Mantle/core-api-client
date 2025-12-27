@@ -5,6 +5,11 @@ import type {
   TaskListResponse,
   TaskCreateParams,
   TaskUpdateParams,
+  TaskUpdateResponse,
+  TodoItem,
+  TodoItemListResponse,
+  TodoItemCreateParams,
+  TodoItemUpdateParams,
 } from '../types';
 import type { DeleteResponse } from '../types/common';
 
@@ -36,15 +41,18 @@ export class TasksResource extends BaseResource {
   /**
    * Create a new task
    */
-  async create(data: TaskCreateParams): Promise<{ task: Task }> {
-    return this.post<{ task: Task }>('/tasks', data);
+  async create(data: TaskCreateParams): Promise<Task> {
+    return this.post<Task>('/tasks', data);
   }
 
   /**
    * Update an existing task
    */
-  async update(taskId: string, data: TaskUpdateParams): Promise<{ task: Task }> {
-    return this.put<{ task: Task }>(`/tasks/${taskId}`, data);
+  async update(
+    taskId: string,
+    data: TaskUpdateParams
+  ): Promise<TaskUpdateResponse> {
+    return this.put<TaskUpdateResponse>(`/tasks/${taskId}`, data);
   }
 
   /**
@@ -52,5 +60,55 @@ export class TasksResource extends BaseResource {
    */
   async del(taskId: string): Promise<DeleteResponse> {
     return this._delete<DeleteResponse>(`/tasks/${taskId}`);
+  }
+
+  // ========== Todo Items ==========
+
+  /**
+   * List todo items for a task
+   */
+  async listTodoItems(taskId: string): Promise<TodoItemListResponse> {
+    return this.get<TodoItemListResponse>(`/tasks/${taskId}/todo-items`);
+  }
+
+  /**
+   * Retrieve a single todo item
+   */
+  async retrieveTodoItem(
+    taskId: string,
+    itemId: string
+  ): Promise<{ item: TodoItem }> {
+    return this.get<{ item: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
+  }
+
+  /**
+   * Create a todo item for a task
+   */
+  async createTodoItem(
+    taskId: string,
+    data: TodoItemCreateParams
+  ): Promise<{ item: TodoItem }> {
+    return this.post<{ item: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
+  }
+
+  /**
+   * Update a todo item
+   */
+  async updateTodoItem(
+    taskId: string,
+    itemId: string,
+    data: TodoItemUpdateParams
+  ): Promise<{ item: TodoItem }> {
+    return this.put<{ item: TodoItem }>(
+      `/tasks/${taskId}/todo-items/${itemId}`,
+      data
+    );
+  }
+
+  /**
+   * Delete a todo item
+   */
+  async deleteTodoItem(taskId: string, itemId: string): Promise<DeleteResponse> {
+    return this._delete<DeleteResponse>(`/tasks/${taskId}/todo-items/${itemId}`);
   }
 }
