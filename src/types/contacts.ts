@@ -74,3 +74,12 @@ export interface ContactCreateParams {
  * Parameters for updating a contact
  */
 export interface ContactUpdateParams extends Partial<ContactCreateParams> {}
+
+/**
+ * Response from creating/upserting a contact
+ */
+export interface ContactCreateResponse {
+  contact: Contact;
+  /** True if a new contact was created, false if an existing contact was updated */
+  created: boolean;
+}

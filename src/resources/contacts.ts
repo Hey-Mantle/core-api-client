@@ -4,6 +4,7 @@ import type {
   ContactListParams,
   ContactListResponse,
   ContactCreateParams,
+  ContactCreateResponse,
   ContactUpdateParams,
 } from '../types';
 import type { DeleteResponse } from '../types/common';
@@ -34,10 +35,13 @@ export class ContactsResource extends BaseResource {
   }
 
   /**
-   * Create a new contact
+   * Create or update a contact.
+   * If a contact with the same email exists in the organization, it will be updated.
+   * Otherwise, a new contact will be created.
+   * @returns The contact and a boolean indicating if it was newly created
    */
-  async create(data: ContactCreateParams): Promise<{ contact: Contact }> {
-    return this.post<{ contact: Contact }>('/contacts', data);
+  async create(data: ContactCreateParams): Promise<ContactCreateResponse> {
+    return this.post<ContactCreateResponse>('/contacts', data);
   }
 
   /**

@@ -33,6 +33,7 @@ export type {
   ContactListParams,
   ContactListResponse,
   ContactCreateParams,
+  ContactCreateResponse,
   ContactUpdateParams,
   SocialProfile,
   SocialProfileType,

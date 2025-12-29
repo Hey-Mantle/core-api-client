@@ -233,8 +233,9 @@ const { contacts, hasNextPage } = await client.contacts.list({
   socialProfileUrl: 'https://linkedin.com/in/johndoe',
 });
 
-// Create a contact with social profiles
-const { contact } = await client.contacts.create({
+// Create or update a contact (upsert by email)
+// If a contact with the same email exists, it will be updated
+const { contact, created } = await client.contacts.create({
   name: 'John Doe',
   email: 'john@acme.com',
   phone: '+1-555-123-4567',
@@ -248,6 +249,7 @@ const { contact } = await client.contacts.create({
     { key: 'website', value: 'https://johndoe.com' },
   ],
 });
+console.log(created ? 'New contact created' : 'Existing contact updated');
 
 // Update a contact
 const { contact } = await client.contacts.update('contact_123', {
