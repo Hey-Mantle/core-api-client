@@ -269,3 +269,19 @@ export type {
   CustomDataResponse,
   CustomDataDeleteParams,
 } from './custom-data';
+
+// Timeline comment types
+export type {
+  TimelineComment,
+  TimelineCommentUser,
+  TimelineCommentAttachment,
+  TimelineCommentTaggedUser,
+  TimelineCommentListParams,
+  TimelineCommentListResponse,
+  TimelineCommentAttachmentInput,
+  TimelineCommentTaggedUserInput,
+  TimelineCommentCreateParams,
+  TimelineCommentUpdateParams,
+  TimelineCommentCreateResponse,
+  TimelineCommentUpdateResponse,
+} from './timelineComments';

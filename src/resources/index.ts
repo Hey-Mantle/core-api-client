@@ -29,3 +29,4 @@ export { AgentsResource } from './agents';
 export { DocsResource } from './docs';
 export { EntitiesResource } from './entities';
 export { CustomDataResource } from './custom-data';
+export { TimelineCommentsResource } from './timelineComments';
