@@ -285,3 +285,19 @@ export type {
   TimelineCommentCreateResponse,
   TimelineCommentUpdateResponse,
 } from './timelineComments';
+
+// List types
+export type {
+  List,
+  ListEntity,
+  ListListParams,
+  ListListResponse,
+  ListRetrieveParams,
+  ListRetrieveResponse,
+  ListCreateParams,
+  ListUpdateParams,
+  ListAddEntitiesParams,
+  ListAddEntitiesResponse,
+  ListRemoveEntitiesParams,
+  ListRemoveEntitiesResponse,
+} from './lists';

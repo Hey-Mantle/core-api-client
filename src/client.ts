@@ -42,6 +42,7 @@ import { DocsResource } from './resources/docs';
 import { EntitiesResource } from './resources/entities';
 import { CustomDataResource } from './resources/custom-data';
 import { TimelineCommentsResource } from './resources/timelineComments';
+import { ListsResource } from './resources/lists';
 
 /**
  * Mantle Core API Client
@@ -101,6 +102,7 @@ export class MantleCoreClient {
   public readonly entities: EntitiesResource;
   public readonly customData: CustomDataResource;
   public readonly timelineComments: TimelineCommentsResource;
+  public readonly lists: ListsResource;
 
   constructor(config: MantleCoreClientConfig) {
     if (!config.apiKey && !config.accessToken) {
@@ -160,6 +162,7 @@ export class MantleCoreClient {
     this.entities = new EntitiesResource(this);
     this.customData = new CustomDataResource(this);
     this.timelineComments = new TimelineCommentsResource(this);
+    this.lists = new ListsResource(this);
   }
 
   /**

@@ -30,3 +30,4 @@ export { DocsResource } from './docs';
 export { EntitiesResource } from './entities';
 export { CustomDataResource } from './custom-data';
 export { TimelineCommentsResource } from './timelineComments';
+export { ListsResource } from './lists';
