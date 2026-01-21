@@ -159,7 +159,7 @@ export interface AccountOwnersListResponse {
 export interface CustomField {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'date' | 'select';
+  type: 'string' | 'number' | 'boolean' | 'date' | 'select' | 'select_single' | 'select_multiple' | 'url' | 'date_time' | 'json' | 'number_integer' | 'number_decimal';
   defaultValue?: unknown;
   options?: string[];
   appLevel?: boolean;
@@ -176,7 +176,7 @@ export interface CustomField {
 export interface CustomFieldCreateParams {
   appId: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'date' | 'select';
+  type: 'string' | 'number' | 'boolean' | 'date' | 'select' | 'select_single' | 'select_multiple' | 'url' | 'date_time' | 'json' | 'number_integer' | 'number_decimal';
   defaultValue?: unknown;
   options?: string[];
   appLevel?: boolean;
