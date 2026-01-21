@@ -46,7 +46,7 @@ import { ListsResource } from './resources/lists';
 import { JournalEntriesResource } from './resources/journal-entries';
 import { EmailUnsubscribeGroupsResource } from './resources/email-unsubscribe-groups';
 import { FlowExtensionsResource } from './resources/flow-extensions';
-import { AIAgentRunsResource } from './resources/ai-agent-runs';
+import { AiAgentRunsResource } from './resources/ai-agent-runs';
 
 /**
  * Mantle Core API Client
@@ -110,7 +110,7 @@ export class MantleCoreClient {
   public readonly journalEntries: JournalEntriesResource;
   public readonly emailUnsubscribeGroups: EmailUnsubscribeGroupsResource;
   public readonly flowExtensions: FlowExtensionsResource;
-  public readonly aiAgentRuns: AIAgentRunsResource;
+  public readonly aiAgentRuns: AiAgentRunsResource;
 
   constructor(config: MantleCoreClientConfig) {
     if (!config.apiKey && !config.accessToken) {
@@ -174,7 +174,7 @@ export class MantleCoreClient {
     this.journalEntries = new JournalEntriesResource(this);
     this.emailUnsubscribeGroups = new EmailUnsubscribeGroupsResource(this);
     this.flowExtensions = new FlowExtensionsResource(this);
-    this.aiAgentRuns = new AIAgentRunsResource(this);
+    this.aiAgentRuns = new AiAgentRunsResource(this);
   }
 
   /**

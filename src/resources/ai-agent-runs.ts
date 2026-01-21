@@ -9,7 +9,7 @@ import type {
 /**
  * Resource for managing AI agent runs
  */
-export class AIAgentRunsResource extends BaseResource {
+export class AiAgentRunsResource extends BaseResource {
   /**
    * Create a new AI agent run
    * Returns 202 Accepted as the run executes asynchronously
