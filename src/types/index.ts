@@ -188,6 +188,12 @@ export type {
   DocPageUpdateParams,
   DocTreeNode,
   DocTreeResponse,
+  DocRepository,
+  DocRepositoryLocale,
+  DocRepositoryCollection,
+  DocRepositoryListParams,
+  DocRepositoryListResponse,
+  DocRepositoryRetrieveParams,
 } from './docs';
 
 // Organization types
@@ -301,3 +307,49 @@ export type {
   ListRemoveEntitiesParams,
   ListRemoveEntitiesResponse,
 } from './lists';
+
+// Journal entry types
+export type {
+  JournalEntry,
+  JournalEntryFile,
+  JournalEntryListParams,
+  JournalEntryListResponse,
+  JournalEntryCreateParams,
+  JournalEntryUpdateParams,
+} from './journal-entries';
+
+// Email types
+export type {
+  EmailUnsubscribeGroup,
+  EmailUnsubscribeGroupMember,
+  EmailUnsubscribeGroupListParams,
+  EmailUnsubscribeGroupListResponse,
+  EmailUnsubscribeGroupMemberListParams,
+  EmailUnsubscribeGroupMemberListResponse,
+  EmailUnsubscribeGroupAddMembersParams,
+  EmailUnsubscribeGroupAddMembersResponse,
+  EmailUnsubscribeGroupRemoveMembersParams,
+  EmailUnsubscribeGroupRemoveMembersResponse,
+} from './email';
+
+// Flow extension types
+export type {
+  FlowActionRunStatus,
+  FlowExtensionAction,
+  FlowActionRun,
+  FlowExtensionActionListParams,
+  FlowExtensionActionListResponse,
+  FlowExtensionActionCreateParams,
+  FlowExtensionActionUpdateParams,
+  FlowActionRunUpdateParams,
+} from './flow-extensions';
+
+// AI agent types
+export type {
+  AgentRunStatus,
+  AgentRunTokenUsage,
+  AgentRun,
+  AgentRunCreateParams,
+  AgentRunCreateResponse,
+  AgentRunRetrieveResponse,
+} from './ai-agents';

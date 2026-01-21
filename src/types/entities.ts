@@ -1,5 +1,6 @@
 import type { Contact } from './contacts';
 import type { Customer } from './customers';
+import type { PaginatedResponse } from './common';
 
 /**
  * Entity type discriminator
@@ -36,6 +37,6 @@ export interface EntitiesSearchParams {
 /**
  * Response from searching entities
  */
-export interface EntitiesSearchResponse {
+export interface EntitiesSearchResponse extends PaginatedResponse {
   entities: Entity[];
 }

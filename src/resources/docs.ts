@@ -12,6 +12,10 @@ import type {
   DocPageCreateParams,
   DocPageUpdateParams,
   DocTreeResponse,
+  DocRepository,
+  DocRepositoryListParams,
+  DocRepositoryListResponse,
+  DocRepositoryRetrieveParams,
 } from '../types';
 import type { DeleteResponse } from '../types/common';
 
@@ -174,5 +178,39 @@ export class DocsResource extends BaseResource {
    */
   async getTree(): Promise<DocTreeResponse> {
     return this.get<DocTreeResponse>('/docs/tree');
+  }
+
+  // ========== Repositories ==========
+
+  /**
+   * List all doc repositories
+   */
+  async listRepositories(
+    params?: DocRepositoryListParams
+  ): Promise<DocRepositoryListResponse> {
+    const response = await this.get<DocRepositoryListResponse>(
+      '/docs/repositories',
+      params
+    );
+    return {
+      repositories: response.repositories || [],
+      hasNextPage: response.hasNextPage || false,
+      hasPreviousPage: response.hasPreviousPage || false,
+      total: response.total,
+      cursor: response.cursor,
+    };
+  }
+
+  /**
+   * Retrieve a single doc repository
+   */
+  async retrieveRepository(
+    repositoryId: string,
+    params?: DocRepositoryRetrieveParams
+  ): Promise<{ repository: DocRepository }> {
+    return this.get<{ repository: DocRepository }>(
+      `/docs/repositories/${repositoryId}`,
+      params
+    );
   }
 }

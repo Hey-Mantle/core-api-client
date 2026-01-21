@@ -13,6 +13,10 @@ export class EntitiesResource extends BaseResource {
     const response = await this.get<EntitiesSearchResponse>('/entities', params);
     return {
       entities: response.entities || [],
+      hasNextPage: response.hasNextPage || false,
+      hasPreviousPage: response.hasPreviousPage || false,
+      total: response.total,
+      cursor: response.cursor,
     };
   }
 }

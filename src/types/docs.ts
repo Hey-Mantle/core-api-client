@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from './common';
+import type { ListParams, PaginatedResponse } from './common';
 
 /**
  * Doc collection entity
@@ -129,4 +129,59 @@ export interface DocTreeNode {
  */
 export interface DocTreeResponse {
   tree: DocTreeNode[];
+}
+
+// ========== Repositories ==========
+
+/**
+ * Locale for a doc repository
+ */
+export interface DocRepositoryLocale {
+  code: string;
+  name: string;
+  isDefault?: boolean;
+}
+
+/**
+ * Collection within a doc repository
+ */
+export interface DocRepositoryCollection {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+}
+
+/**
+ * Doc repository entity
+ */
+export interface DocRepository {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  locales: DocRepositoryLocale[];
+  collections: DocRepositoryCollection[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Parameters for listing doc repositories
+ */
+export interface DocRepositoryListParams extends ListParams {}
+
+/**
+ * Response from listing doc repositories
+ */
+export interface DocRepositoryListResponse extends PaginatedResponse {
+  repositories: DocRepository[];
+}
+
+/**
+ * Parameters for retrieving a doc repository
+ */
+export interface DocRepositoryRetrieveParams {
+  includeCollections?: boolean;
+  includeLocales?: boolean;
 }
