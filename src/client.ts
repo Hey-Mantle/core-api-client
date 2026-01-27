@@ -43,6 +43,7 @@ import { EntitiesResource } from './resources/entities';
 import { CustomDataResource } from './resources/custom-data';
 import { TimelineCommentsResource } from './resources/timelineComments';
 import { ListsResource } from './resources/lists';
+import { MeetingsResource } from './resources/meetings';
 import { JournalEntriesResource } from './resources/journal-entries';
 import { EmailUnsubscribeGroupsResource } from './resources/email-unsubscribe-groups';
 import { FlowExtensionsResource } from './resources/flow-extensions';
@@ -107,6 +108,7 @@ export class MantleCoreClient {
   public readonly customData: CustomDataResource;
   public readonly timelineComments: TimelineCommentsResource;
   public readonly lists: ListsResource;
+  public readonly meetings: MeetingsResource;
   public readonly journalEntries: JournalEntriesResource;
   public readonly emailUnsubscribeGroups: EmailUnsubscribeGroupsResource;
   public readonly flowExtensions: FlowExtensionsResource;
@@ -171,6 +173,7 @@ export class MantleCoreClient {
     this.customData = new CustomDataResource(this);
     this.timelineComments = new TimelineCommentsResource(this);
     this.lists = new ListsResource(this);
+    this.meetings = new MeetingsResource(this);
     this.journalEntries = new JournalEntriesResource(this);
     this.emailUnsubscribeGroups = new EmailUnsubscribeGroupsResource(this);
     this.flowExtensions = new FlowExtensionsResource(this);

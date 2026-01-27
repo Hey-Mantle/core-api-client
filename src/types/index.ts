@@ -308,6 +308,30 @@ export type {
   ListRemoveEntitiesResponse,
 } from './lists';
 
+// Meeting types
+export type {
+  MeetingPlatform,
+  RecordingStatus,
+  TranscriptStatus,
+  MeetingTranscriptWord,
+  MeetingAttendeeRef,
+  MeetingUtterance,
+  MeetingTranscript,
+  MeetingUser,
+  MeetingContactRef,
+  MeetingAttendee,
+  MeetingDeal,
+  MeetingCustomer,
+  Meeting,
+  MeetingListParams,
+  MeetingListResponse,
+  MeetingAttendeeInput,
+  MeetingUtteranceInput,
+  MeetingTranscriptInput,
+  MeetingCreateParams,
+  MeetingUpdateParams,
+} from './meetings';
+
 // Journal entry types
 export type {
   JournalEntry,

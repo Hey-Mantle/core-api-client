@@ -31,6 +31,7 @@ export { EntitiesResource } from './entities';
 export { CustomDataResource } from './custom-data';
 export { TimelineCommentsResource } from './timelineComments';
 export { ListsResource } from './lists';
+export { MeetingsResource } from './meetings';
 export { JournalEntriesResource } from './journal-entries';
 export { EmailUnsubscribeGroupsResource } from './email-unsubscribe-groups';
 export { FlowExtensionsResource } from './flow-extensions';

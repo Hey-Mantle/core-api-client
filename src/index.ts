@@ -63,4 +63,5 @@ export {
   DocsResource,
   EntitiesResource,
   CustomDataResource,
+  MeetingsResource,
 } from './resources';
