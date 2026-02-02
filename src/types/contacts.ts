@@ -25,6 +25,7 @@ export interface Contact {
   id: string;
   name?: string;
   email?: string;
+  secondaryEmails?: string[];
   phone?: string;
   jobTitle?: string;
   notes?: string;
@@ -62,6 +63,7 @@ export interface ContactListResponse extends PaginatedResponse {
 export interface ContactCreateParams {
   name?: string;
   email?: string;
+  secondaryEmails?: string[];
   phone?: string;
   jobTitle?: string;
   notes?: string;
