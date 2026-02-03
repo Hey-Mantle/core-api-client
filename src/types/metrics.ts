@@ -107,3 +107,28 @@ export interface UsageEventMetricsParams extends MetricsBaseParams {
 export interface UsageMetricParams extends MetricsBaseParams {
   metricId: string;
 }
+
+/**
+ * Parameters for sales metrics request
+ */
+export interface SalesMetricsParams {
+  userId?: string;
+}
+
+/**
+ * Sales metrics data
+ */
+export interface SalesMetrics {
+  attributedRevenue: number;
+  activeDeals: number;
+  activeDealsTotalAmount: number;
+  winRate: number;
+  avgDealSize: number;
+}
+
+/**
+ * Response from sales metrics endpoint
+ */
+export interface SalesMetricsResponse {
+  metrics: SalesMetrics;
+}

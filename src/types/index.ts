@@ -150,6 +150,9 @@ export type {
   MetricsResponse,
   UsageEventMetricsParams,
   UsageMetricParams,
+  SalesMetricsParams,
+  SalesMetrics,
+  SalesMetricsResponse,
 } from './metrics';
 
 // Webhook types

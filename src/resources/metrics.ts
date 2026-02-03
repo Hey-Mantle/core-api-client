@@ -6,6 +6,8 @@ import type {
   UsageEventMetricsParams,
   UsageMetricParams,
   DateRangeType,
+  SalesMetricsParams,
+  SalesMetricsResponse,
 } from '../types';
 
 /**
@@ -253,5 +255,12 @@ export class MetricsResource extends BaseResource {
       dateRange: params.dateRange || 'last_30_days',
       ...params,
     });
+  }
+
+  /**
+   * Get key sales metrics
+   */
+  async sales(params?: SalesMetricsParams): Promise<SalesMetricsResponse> {
+    return this.get<SalesMetricsResponse>('/metrics/sales', params);
   }
 }
