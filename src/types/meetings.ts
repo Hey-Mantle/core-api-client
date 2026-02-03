@@ -146,6 +146,10 @@ export interface MeetingListParams extends ListParams {
  */
 export interface MeetingListResponse extends PaginatedResponse {
   meetings: Meeting[];
+  /** Current page number (0-indexed) */
+  page?: number;
+  /** Total number of pages */
+  totalPages?: number;
 }
 
 /**
