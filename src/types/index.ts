@@ -356,3 +356,21 @@ export type {
   AgentRunCreateResponse,
   AgentRunRetrieveResponse,
 } from './ai-agents';
+
+// Meeting types
+export type {
+  Meeting,
+  MeetingAttendee,
+  MeetingTranscript,
+  MeetingUtterance,
+  MeetingListParams,
+  MeetingListResponse,
+  MeetingCreateParams,
+  MeetingUpdateParams,
+  MeetingAttendeeInput,
+  MeetingTranscriptInput,
+  MeetingUtteranceInput,
+  MeetingUploadUrlResponse,
+  MeetingTranscribeParams,
+  MeetingTranscriptionStatusResponse,
+} from './meetings';
