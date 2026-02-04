@@ -324,4 +324,29 @@ export class MeetingsResource extends BaseResource {
       data
     );
   }
+
+  /**
+   * Get a signed URL to stream/download the meeting recording
+   *
+   * Returns a temporary signed URL that can be used to play or download
+   * the meeting recording. URLs expire after 1 hour.
+   *
+   * @param meetingId - The meeting ID
+   * @returns Signed URL and expiration info
+   *
+   * @example
+   * ```typescript
+   * const { recordingUrl, expiresIn } = await client.meetings.getRecordingUrl('meeting_123');
+   *
+   * // Use the URL in an audio/video element
+   * audioElement.src = recordingUrl;
+   * ```
+   */
+  async getRecordingUrl(
+    meetingId: string
+  ): Promise<{ recordingUrl: string; expiresIn: number }> {
+    return this.get<{ recordingUrl: string; expiresIn: number }>(
+      `/meetings/${meetingId}/recording-url`
+    );
+  }
 }
