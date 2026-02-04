@@ -28,7 +28,10 @@ export function toQueryString(params: Record<string, unknown>): string {
 
   for (const [key, value] of Object.entries(sanitized)) {
     if (Array.isArray(value)) {
-      value.forEach((v) => searchParams.append(key, String(v)));
+      // Join array values with commas (e.g., stage=lead,closed_won)
+      if (value.length > 0) {
+        searchParams.append(key, value.map(String).join(','));
+      }
     } else if (value !== null && value !== undefined) {
       searchParams.append(key, String(value));
     }
