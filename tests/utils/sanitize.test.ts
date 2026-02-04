@@ -92,10 +92,11 @@ describe('toQueryString', () => {
     expect(result).toBe('active=true&deleted=false')
   })
 
-  it('handles array values with multiple entries for same key', () => {
+  it('handles array values with comma-separated values', () => {
     const result = toQueryString({ tags: ['a', 'b', 'c'] })
 
-    expect(result).toBe('tags=a&tags=b&tags=c')
+    // Arrays are joined with commas (URL-encoded as %2C)
+    expect(result).toBe('tags=a%2Cb%2Cc')
   })
 
   it('filters out undefined values', () => {
