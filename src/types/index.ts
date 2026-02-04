@@ -373,4 +373,6 @@ export type {
   MeetingUploadUrlResponse,
   MeetingTranscribeParams,
   MeetingTranscriptionStatusResponse,
+  MeetingAttendeeUpdateParams,
+  MeetingAttendeeUpdateResponse,
 } from './meetings';

@@ -8,6 +8,8 @@ import type {
   MeetingUploadUrlResponse,
   MeetingTranscribeParams,
   MeetingTranscriptionStatusResponse,
+  MeetingAttendeeUpdateParams,
+  MeetingAttendeeUpdateResponse,
 } from '../types/meetings';
 import type { DeleteResponse } from '../types/common';
 
@@ -269,6 +271,57 @@ export class MeetingsResource extends BaseResource {
   ): Promise<MeetingTranscriptionStatusResponse> {
     return this.get<MeetingTranscriptionStatusResponse>(
       `/meetings/${meetingId}/transcribe`
+    );
+  }
+
+  /**
+   * Update a meeting attendee
+   *
+   * Updates attendee details such as name or links the attendee to a Mantle contact.
+   * This is useful for speaker identification in transcripts.
+   *
+   * @param meetingId - The meeting ID
+   * @param attendeeId - The attendee ID (or externalId if useExternalId option is set)
+   * @param data - Fields to update
+   * @param options - Additional options
+   * @param options.useExternalId - If true, treat attendeeId as the externalId (e.g., "A", "B" from browser extension)
+   * @returns The updated attendee
+   *
+   * @example
+   * ```typescript
+   * // Update attendee name by server ID
+   * const { attendee } = await client.meetings.updateAttendee(
+   *   'meeting_123',
+   *   'attendee_456',
+   *   { name: 'John Doe' }
+   * );
+   *
+   * // Update attendee name by external ID (e.g., from browser extension)
+   * const { attendee } = await client.meetings.updateAttendee(
+   *   'meeting_123',
+   *   'A',
+   *   { name: 'John Doe' },
+   *   { useExternalId: true }
+   * );
+   *
+   * // Link attendee to a contact
+   * const { attendee } = await client.meetings.updateAttendee(
+   *   'meeting_123',
+   *   'attendee_456',
+   *   { contactId: 'contact_789' }
+   * );
+   * ```
+   */
+  async updateAttendee(
+    meetingId: string,
+    attendeeId: string,
+    data: MeetingAttendeeUpdateParams,
+    options?: { useExternalId?: boolean }
+  ): Promise<MeetingAttendeeUpdateResponse> {
+    const queryParams = options?.useExternalId ? '?useExternalId=true' : '';
+    return this.put<MeetingAttendeeUpdateResponse>(
+      `/meetings/${meetingId}/attendees/${attendeeId}${queryParams}`,
+      data
     );
   }
 }

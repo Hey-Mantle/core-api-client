@@ -300,3 +300,22 @@ export interface MeetingTranscriptionStatusResponse {
     externalId?: string;
   } | null;
 }
+
+/**
+ * Parameters for updating a meeting attendee
+ */
+export interface MeetingAttendeeUpdateParams {
+  /** Updated attendee name */
+  name?: string;
+  /** Updated attendee email */
+  email?: string;
+  /** Link attendee to a Mantle contact (null to unlink) */
+  contactId?: string | null;
+}
+
+/**
+ * Response from updating an attendee
+ */
+export interface MeetingAttendeeUpdateResponse {
+  attendee: MeetingAttendee;
+}
