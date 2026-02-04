@@ -84,14 +84,14 @@ export interface DealListParams extends ListParams {
   customerId?: string;
   appId?: string;
   planId?: string;
-  dealStageId?: string;
-  dealFlowId?: string;
+  dealStageId?: string | string[];
+  dealFlowId?: string | string[];
   affiliateId?: string;
   partnershipId?: string;
   acquirerId?: string;
   ownerId?: string;
   contactId?: string;
-  stage?: string;
+  stage?: string | string[];
   step?: number;
   minAmount?: number;
   maxAmount?: number;
