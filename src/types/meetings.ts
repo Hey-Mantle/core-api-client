@@ -15,6 +15,10 @@ export interface MeetingAttendee {
   talkTime?: number | null;
   /** Total word count */
   wordCount?: number | null;
+  /** Attendee sentiment score (-1 to 1). Populated by AI enrichment. */
+  sentiment?: number | null;
+  /** Attendee engagement score (0 to 1). Populated by AI enrichment. */
+  engagementScore?: number | null;
   /** Associated Mantle user */
   user?: {
     id: string;
@@ -101,6 +105,28 @@ export interface Meeting {
   recordingUrl?: string | null;
   /** Recording status: pending, processing, ready, failed */
   recordingStatus?: string | null;
+  /** AI enrichment status: pending, processing, completed, failed */
+  aiEnrichmentStatus?: string | null;
+  /** When AI enrichment was last completed */
+  aiEnrichedAt?: string | null;
+  /** AI-generated meeting summary */
+  aiSummary?: string | null;
+  /** AI-extracted key points */
+  aiKeyPoints?: MeetingKeyPoint[];
+  /** AI-extracted decisions */
+  aiDecisions?: MeetingDecision[];
+  /** AI-extracted open questions */
+  aiOpenQuestions?: MeetingOpenQuestion[];
+  /** AI-extracted topics */
+  aiTopics?: MeetingTopic[];
+  /** Overall meeting sentiment (-1 to 1) */
+  overallSentiment?: number | null;
+  /** Sentiment over time */
+  sentimentTrend?: SentimentDataPoint[];
+  /** AI-extracted deal insights */
+  aiDealInsights?: MeetingDealInsights | null;
+  /** AI-suggested tasks */
+  taskSuggestions?: MeetingTaskSuggestion[];
   deal?: {
     id: string;
     name?: string;
@@ -318,4 +344,102 @@ export interface MeetingAttendeeUpdateParams {
  */
 export interface MeetingAttendeeUpdateResponse {
   attendee: MeetingAttendee;
+}
+
+// --- AI Enrichment Types ---
+
+/**
+ * A key point extracted from the meeting by AI
+ */
+export interface MeetingKeyPoint {
+  point: string;
+  speaker?: string | null;
+  timestampMs?: number | null;
+}
+
+/**
+ * A decision extracted from the meeting by AI
+ */
+export interface MeetingDecision {
+  decision: string;
+  context?: string | null;
+}
+
+/**
+ * An open question extracted from the meeting by AI
+ */
+export interface MeetingOpenQuestion {
+  question: string;
+  askedBy?: string | null;
+}
+
+/**
+ * A topic discussed in the meeting, extracted by AI
+ */
+export interface MeetingTopic {
+  topic: string;
+  relevance: number;
+}
+
+/**
+ * A sentiment data point representing sentiment at a point in time
+ */
+export interface SentimentDataPoint {
+  timestampMs: number;
+  sentiment: number;
+}
+
+/**
+ * Deal-related insights extracted by AI
+ */
+export interface MeetingDealInsights {
+  objections: Array<{
+    objection: string;
+    speaker?: string | null;
+    severity: string;
+  }>;
+  competitorMentions: Array<{
+    competitor: string;
+    context: string;
+    sentiment: string;
+  }>;
+  budgetDiscussions: Array<{ quote: string; implication: string }>;
+  timelineMentions: Array<{ quote: string; inferredDate?: string | null }>;
+  buyingSignals: string[];
+  riskIndicators: string[];
+}
+
+/**
+ * An AI-generated task suggestion from a meeting
+ */
+export interface MeetingTaskSuggestion {
+  id: string;
+  title: string;
+  description?: string | null;
+  priority: string;
+  suggestedAssigneeId?: string | null;
+  suggestedDueDate?: string | null;
+  triggerPhrase?: string | null;
+  status: string;
+  createdTaskId?: string | null;
+  createdAt?: string | null;
+}
+
+/**
+ * Parameters for accepting a task suggestion with optional overrides
+ */
+export interface AcceptTaskSuggestionParams {
+  title?: string;
+  description?: string;
+  priority?: string;
+  dueDate?: string;
+  assigneeId?: string;
+}
+
+/**
+ * Response from accepting a task suggestion
+ */
+export interface AcceptTaskSuggestionResponse {
+  task: { id: string; title: string };
+  suggestion: MeetingTaskSuggestion;
 }

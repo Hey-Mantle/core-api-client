@@ -375,4 +375,13 @@ export type {
   MeetingTranscriptionStatusResponse,
   MeetingAttendeeUpdateParams,
   MeetingAttendeeUpdateResponse,
+  MeetingKeyPoint,
+  MeetingDecision,
+  MeetingOpenQuestion,
+  MeetingTopic,
+  SentimentDataPoint,
+  MeetingDealInsights,
+  MeetingTaskSuggestion,
+  AcceptTaskSuggestionParams,
+  AcceptTaskSuggestionResponse,
 } from './meetings';

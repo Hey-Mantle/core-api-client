@@ -10,6 +10,8 @@ import type {
   MeetingTranscriptionStatusResponse,
   MeetingAttendeeUpdateParams,
   MeetingAttendeeUpdateResponse,
+  AcceptTaskSuggestionParams,
+  AcceptTaskSuggestionResponse,
 } from '../types/meetings';
 import type { DeleteResponse } from '../types/common';
 
@@ -347,6 +349,68 @@ export class MeetingsResource extends BaseResource {
   ): Promise<{ recordingUrl: string; expiresIn: number }> {
     return this.get<{ recordingUrl: string; expiresIn: number }>(
       `/meetings/${meetingId}/recording-url`
+    );
+  }
+
+  /**
+   * Accept an AI-generated task suggestion
+   *
+   * Creates a real Task from the suggestion. Optional overrides allow
+   * modifying the title, description, priority, due date, or assignee
+   * before creating the task.
+   *
+   * @param meetingId - The meeting ID
+   * @param suggestionId - The task suggestion ID
+   * @param overrides - Optional fields to override on the created task
+   * @returns The created task and updated suggestion
+   *
+   * @example
+   * ```typescript
+   * // Accept a suggestion as-is
+   * const { task, suggestion } = await client.meetings.acceptTaskSuggestion(
+   *   'meeting_123',
+   *   'suggestion_456'
+   * );
+   *
+   * // Accept with overrides
+   * const { task } = await client.meetings.acceptTaskSuggestion(
+   *   'meeting_123',
+   *   'suggestion_456',
+   *   { title: 'Custom title', priority: 'high' }
+   * );
+   * ```
+   */
+  async acceptTaskSuggestion(
+    meetingId: string,
+    suggestionId: string,
+    overrides?: AcceptTaskSuggestionParams
+  ): Promise<AcceptTaskSuggestionResponse> {
+    return this.post<AcceptTaskSuggestionResponse>(
+      `/meetings/${meetingId}/task-suggestions/${suggestionId}/accept`,
+      overrides || {}
+    );
+  }
+
+  /**
+   * Dismiss an AI-generated task suggestion
+   *
+   * Marks the suggestion as dismissed so it no longer appears as pending.
+   *
+   * @param meetingId - The meeting ID
+   * @param suggestionId - The task suggestion ID
+   * @returns Success response
+   *
+   * @example
+   * ```typescript
+   * await client.meetings.dismissTaskSuggestion('meeting_123', 'suggestion_456');
+   * ```
+   */
+  async dismissTaskSuggestion(
+    meetingId: string,
+    suggestionId: string
+  ): Promise<{ success: boolean }> {
+    return this.post<{ success: boolean }>(
+      `/meetings/${meetingId}/task-suggestions/${suggestionId}/dismiss`
     );
   }
 }
