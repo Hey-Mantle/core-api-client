@@ -10,15 +10,49 @@ TypeScript SDK for the Mantle Core API. Provides a resource-based architecture s
 src/
 ├── client.ts          # Main MantleCoreClient class
 ├── index.ts           # Public exports
-├── resources/         # 30+ resource classes
+├── resources/         # 37 resource classes
 │   ├── base.ts        # BaseResource with HTTP methods
 │   ├── customers.ts   # CustomersResource
+│   ├── contacts.ts    # ContactsResource
 │   ├── deals.ts       # DealsResource
-│   └── ...
+│   ├── deal-flows.ts  # DealFlowsResource
+│   ├── deal-activities.ts # DealActivitiesResource
+│   ├── subscriptions.ts   # SubscriptionsResource
+│   ├── apps.ts        # AppsResource (plans, features, reviews, usage metrics, events)
+│   ├── tickets.ts     # TicketsResource (with messages)
+│   ├── channels.ts    # ChannelsResource
+│   ├── agents.ts      # AgentsResource
+│   ├── meetings.ts    # MeetingsResource (recording, transcription, AI enrichment)
+│   ├── ai-agent-runs.ts  # AiAgentRunsResource
+│   ├── tasks.ts       # TasksResource (with todo items)
+│   ├── docs.ts        # DocsResource (collections, groups, pages, repositories, tree)
+│   ├── flows.ts       # FlowsResource
+│   ├── flow-extensions.ts # FlowExtensionsResource
+│   ├── lists.ts       # ListsResource
+│   ├── entities.ts    # EntitiesResource (unified search)
+│   ├── custom-data.ts # CustomDataResource
+│   ├── timelineComments.ts # TimelineCommentsResource
+│   ├── journal-entries.ts  # JournalEntriesResource
+│   ├── email-unsubscribe-groups.ts # EmailUnsubscribeGroupsResource
+│   ├── metrics.ts     # MetricsResource
+│   ├── usage-events.ts    # UsageEventsResource
+│   ├── webhooks.ts    # WebhooksResource
+│   ├── affiliates.ts  # AffiliatesResource
+│   ├── affiliate-programs.ts  # AffiliateProgramsResource
+│   ├── affiliate-commissions.ts # AffiliateCommissionsResource
+│   ├── affiliate-payouts.ts    # AffiliatePayoutsResource
+│   ├── affiliate-referrals.ts  # AffiliateReferralsResource
+│   ├── companies.ts   # CompaniesResource
+│   ├── customer-segments.ts   # CustomerSegmentsResource
+│   ├── transactions.ts    # TransactionsResource
+│   ├── charges.ts     # ChargesResource
+│   ├── users.ts       # UsersResource
+│   ├── me.ts          # MeResource
+│   └── organization.ts   # OrganizationResource
 ├── types/             # TypeScript interfaces
 │   ├── common.ts      # Shared types (ListParams, PaginatedResponse)
 │   ├── customers.ts   # Customer types
-│   └── ...
+│   └── ...            # 31 type files total
 ├── middleware/        # Koa-style middleware system
 │   ├── types.ts       # Middleware interfaces
 │   ├── manager.ts     # MiddlewareManager class
@@ -96,20 +130,64 @@ client.use(createRateLimitMiddleware({
 }));
 ```
 
-## Important Resources
+## Resources by Category
 
-### Complex Resources
-- **Deals** - Has inline customer/contact creation via `customer` and `contacts` objects
-- **Apps** - Parent resource with nested plans, features, reviews, usage metrics
-- **Tickets** - Has nested messages resource
-- **Customers** - Has custom fields, account owners, timeline
+### CRM & Sales
+- **Customers** - Full CRUD, custom fields, account owners, timeline, tags
+- **Contacts** - CRUD, tags, social profiles, upsert by email
+- **Companies** - CRUD for grouping customers
+- **Customer Segments** - List and retrieve only (read-only)
+- **Deals** - CRUD, inline customer/contact creation, timeline (`timeline()`), events (`listEvents()`, `createEvent()`)
+- **Deal Flows** - CRUD for deal pipelines and stages
+- **Deal Activities** - CRUD for activities within deal flows
+- **Tasks** - CRUD with nested todo items sub-resource, deal progression on status change
+- **Timeline Comments** - CRUD for comments on customer/contact timelines, with attachments and tagged users
+- **Lists** - CRUD for organizing customers/contacts, with addEntities/removeEntities
 
-### Newly Added (may need docs)
-- `dealFlows` - Deal pipeline management
-- `dealActivities` - Deal activity tracking
-- `channels` - CX channels (email/chat)
-- `agents` - Support agents
-- `entities` - Generic entity resource
+### Meetings & AI
+- **Meetings** - CRUD, recording upload (getUploadUrl), transcription (startTranscription, getTranscriptionStatus), recording playback (getRecordingUrl), attendee management, AI enrichment (sentiment, engagement, deal insights, key points, decisions, topics), task suggestions (acceptTaskSuggestion, dismissTaskSuggestion)
+- **AI Agent Runs** - create, retrieve, createAndWait (convenience polling helper)
+
+### Apps & Billing
+- **Apps** - Parent resource with nested: plans, features, reviews, usage metrics, app events, event names, property keys
+- **Subscriptions** - List and retrieve
+- **Transactions** - List and retrieve
+- **Charges** - List only
+- **Usage Events** - List and create (single or batch)
+- **Metrics** - mrr, arr, arpu, ltv, predictedLtv, revenueChurn, logoChurn, revenueRetention, netRevenueRetention, netRevenue, activeSubscriptions, activeInstalls, netInstalls, charges, payout, usageEvent, usageMetric, sales, fetch (custom)
+
+### Support
+- **Tickets** - CRUD with nested messages resource (listMessages, retrieveMessage, createMessage, updateMessage, deleteMessage)
+- **Channels** - List and create (email/chat)
+- **Agents** - list, retrieve, create, findOrCreate
+
+### Affiliates
+- **Affiliates** - List, retrieve, update
+- **Affiliate Programs** - Full CRUD
+- **Affiliate Commissions** - List and retrieve only
+- **Affiliate Payouts** - List and retrieve only
+- **Affiliate Referrals** - List and retrieve
+
+### Documentation
+- **Docs** - Collections (CRUD), groups (CRUD), pages (CRUD + publishPage, archivePage), repositories (list, retrieve), tree (getTree)
+
+### Automation & Extensions
+- **Flows** - CRUD for automation flows
+- **Flow Extensions** - Custom actions (listActions, retrieveAction, createAction, updateAction, deleteAction), action run updates (updateActionRun)
+
+### Data & Search
+- **Entities** - Unified search across contacts and customers (`search()`)
+- **Custom Data** - set, getValue, del for arbitrary key-value data on tickets/customers/contacts/deals/conversations
+- **Journal Entries** - CRUD for app journal/changelog entries
+
+### Email
+- **Email Unsubscribe Groups** - list, retrieve, listMembers, addMembers, removeMembers, removeMember
+
+### Platform
+- **Webhooks** - Full CRUD
+- **Users** - List and retrieve
+- **Me** - Retrieve current user and organization
+- **Organization** - Retrieve organization details
 
 ## Types to Know
 
@@ -121,6 +199,14 @@ client.use(createRateLimitMiddleware({
 - Social profile: `'linkedin' | 'x' | 'facebook' | 'instagram' | 'website'`
 - Channel type: `'email' | 'chat'`
 - Custom field type: `'string' | 'number' | 'boolean' | 'date' | 'select'`
+- Task status: `'new' | 'in_progress' | 'complete'`
+- Task priority: `'low' | 'medium' | 'high'`
+- Agent run status: `'pending' | 'running' | 'completed' | 'error'`
+- Flow action run status: `'pending' | 'running' | 'completed' | 'failed'`
+- Doc page status: `'draft' | 'published' | 'archived'`
+- Custom data resource type: `'ticket' | 'customer' | 'contact' | 'deal' | 'conversation'`
+- Recording status: `'pending' | 'processing' | 'ready' | 'failed'`
+- Entity type: `'contact' | 'customer'`
 
 ### Date Ranges (for metrics)
 `'last_30_minutes' | 'last_60_minutes' | 'last_12_hours' | 'last_24_hours' | 'last_7_days' | 'last_14_days' | 'last_30_days' | 'last_90_days' | 'last_12_months' | 'last_24_months' | 'today' | 'yesterday' | 'last_month' | 'month_to_date' | 'quarter_to_date' | 'year_to_date' | 'all_time' | 'custom'`
@@ -131,6 +217,7 @@ client.use(createRateLimitMiddleware({
 MantleAPIError           // Base error (includes statusCode)
 MantleAuthenticationError // 401
 MantlePermissionError    // 403
+MantleNotFoundError      // 404 (includes resource and id)
 MantleValidationError    // 422 (includes details)
 MantleRateLimitError     // 429 (includes retryAfter)
 ```
@@ -138,11 +225,34 @@ MantleRateLimitError     // 429 (includes retryAfter)
 ## Commands
 
 ```bash
-npm run build        # Build TypeScript
-npm run typecheck    # Type checking only
-npm run lint         # ESLint
-npm run format       # Prettier
+npm run build           # Build TypeScript (tsup: CJS + ESM + DTS)
+npm run typecheck       # Type checking only
+npm run test            # Run tests (Vitest)
+npm run test:watch      # Run tests in watch mode
+npm run test:ui         # Run tests with Vitest UI
+npm run test:coverage   # Run tests with coverage (v8)
 ```
+
+## Testing
+
+- **Framework:** Vitest ^1.2.0
+- **Coverage:** @vitest/coverage-v8
+- **Test location:** `tests/`
+- **UI:** @vitest/ui for browser-based test viewer
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci.yml`):
+- Triggers on push/PR to `main`
+- Node.js matrix: 18.x, 20.x
+- Steps: install (`npm ci`) -> typecheck -> test -> build
+
+## Build Configuration
+
+- **Build tool:** tsup (CJS + ESM + DTS output)
+- **Node engine:** >=18.0.0
+- **Dual exports:** `import` (ESM) and `require` (CJS) with TypeScript declarations
+- **Entry point:** `src/index.ts`
 
 ## Code Style
 
@@ -151,3 +261,4 @@ npm run format       # Prettier
 - JSDoc comments on public methods
 - Export types separately from implementations
 - Use `_delete` internally, expose as `del` on resources
+- Vitest for testing

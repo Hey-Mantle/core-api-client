@@ -261,6 +261,13 @@ const { contact } = await client.contacts.update('contact_123', {
 
 // Retrieve a contact
 const { contact } = await client.contacts.retrieve('contact_123');
+
+// Delete a contact
+await client.contacts.del('contact_123');
+
+// Add/remove tags
+await client.contacts.addTags('contact_123', ['vip', 'decision-maker']);
+await client.contacts.removeTags('contact_123', ['trial']);
 ```
 
 ### Subscriptions
@@ -381,10 +388,16 @@ const { deal } = await client.deals.update('deal_123', {
 await client.deals.del('deal_123');
 
 // Get deal timeline
-const { events } = await client.deals.getTimeline('deal_123');
+const { events } = await client.deals.timeline('deal_123');
 
 // Get deal events
-const { events } = await client.deals.getEvents('deal_123');
+const { events } = await client.deals.listEvents('deal_123');
+
+// Create a deal event
+const { event } = await client.deals.createEvent('deal_123', {
+  type: 'note',
+  description: 'Called the customer to discuss pricing',
+});
 ```
 
 ### Deal Flows
@@ -710,11 +723,26 @@ const { channel } = await client.channels.create({
 
 ### Agents
 
-List support agents:
+Manage support agents:
 
 ```typescript
 // List agents
 const { agents } = await client.agents.list();
+
+// Retrieve an agent
+const { agent } = await client.agents.retrieve('agent_123');
+
+// Create an agent
+const { agent } = await client.agents.create({
+  email: 'agent@company.com',
+  name: 'Support Agent',
+});
+
+// Find or create an agent (upsert by email)
+const { agent } = await client.agents.findOrCreate({
+  email: 'agent@company.com',
+  name: 'Support Agent',
+});
 ```
 
 ### Metrics
@@ -795,6 +823,12 @@ const usageMetrics = await client.metrics.usageEvent({
 const metricData = await client.metrics.usageMetric({
   appId: 'app_123',
   metricId: 'metric_123',
+  dateRange: 'last_30_days',
+});
+
+// Sales metrics
+const salesData = await client.metrics.sales({
+  appId: 'app_123',
   dateRange: 'last_30_days',
 });
 
@@ -935,11 +969,6 @@ const { commissions, hasNextPage } = await client.affiliateCommissions.list({
 
 // Retrieve a commission
 const { commission } = await client.affiliateCommissions.retrieve('commission_123');
-
-// Update a commission
-const { commission } = await client.affiliateCommissions.update('commission_123', {
-  status: 'approved',
-});
 ```
 
 ### Affiliate Payouts
@@ -953,13 +982,6 @@ const { payouts, hasNextPage } = await client.affiliatePayouts.list({
 
 // Retrieve a payout
 const { payout } = await client.affiliatePayouts.retrieve('payout_123');
-
-// Create a payout
-const { payout } = await client.affiliatePayouts.create({
-  affiliateId: 'affiliate_123',
-  amount: 10000, // $100.00
-  currencyCode: 'USD',
-});
 ```
 
 ### Affiliate Referrals
@@ -1010,51 +1032,75 @@ const { customerSegments } = await client.customerSegments.list();
 
 // Retrieve a segment
 const { customerSegment } = await client.customerSegments.retrieve('segment_123');
-
-// Create a segment
-const { customerSegment } = await client.customerSegments.create({
-  name: 'Enterprise Customers',
-  filters: { lifetimeValue: { gte: 10000 } },
-});
-
-// Update a segment
-const { customerSegment } = await client.customerSegments.update('segment_123', {
-  name: 'Enterprise Customers (Updated)',
-});
-
-// Delete a segment
-await client.customerSegments.del('segment_123');
 ```
 
 ### Tasks
 
+Tasks support todo items as a nested sub-resource. Updating a task's status can trigger deal progression if the task is linked to a deal activity.
+
 ```typescript
 // List tasks
 const { tasks, hasNextPage } = await client.tasks.list({
-  status: 'pending',
-  assignedToId: 'user_123',
+  status: 'new', // 'new' | 'in_progress' | 'complete'
+  priority: 'high', // 'low' | 'medium' | 'high'
+  assigneeId: 'user_123',
   customerId: 'cust_123',
+  dealId: 'deal_123',
 });
 
 // Retrieve a task
 const { task } = await client.tasks.retrieve('task_123');
 
-// Create a task
-const { task } = await client.tasks.create({
+// Create a task with todo items
+const task = await client.tasks.create({
   title: 'Follow up with customer',
   description: 'Discuss renewal options',
-  dueAt: '2024-02-15T10:00:00Z',
-  assignedToId: 'user_123',
+  priority: 'high',
+  dueDate: '2024-02-15',
+  assigneeId: 'user_123',
   customerId: 'cust_123',
+  dealId: 'deal_123',
+  dealActivityId: 'activity_123',
+  tags: ['follow-up'],
+  todoItems: [
+    { content: 'Prepare pricing proposal', completed: false },
+    { content: 'Review contract terms', completed: false },
+  ],
 });
 
-// Update a task
-const { task } = await client.tasks.update('task_123', {
-  status: 'completed',
+// Update a task (may trigger deal progression)
+const { task, dealProgressed, dealProgression } = await client.tasks.update('task_123', {
+  status: 'complete',
 });
+if (dealProgressed) {
+  console.log(`Deal "${dealProgression.dealName}" moved to stage "${dealProgression.nextStage.name}"`);
+}
 
 // Delete a task
 await client.tasks.del('task_123');
+
+// --- Todo Items ---
+
+// List todo items for a task
+const { items, total } = await client.tasks.listTodoItems('task_123');
+
+// Retrieve a todo item
+const { item } = await client.tasks.retrieveTodoItem('task_123', 'item_123');
+
+// Create a todo item
+const { item } = await client.tasks.createTodoItem('task_123', {
+  content: 'Send follow-up email',
+  completed: false,
+  displayOrder: 3,
+});
+
+// Update a todo item
+const { item } = await client.tasks.updateTodoItem('task_123', 'item_123', {
+  completed: true,
+});
+
+// Delete a todo item
+await client.tasks.deleteTodoItem('task_123', 'item_123');
 ```
 
 ### Flows (Automation)
@@ -1102,9 +1148,6 @@ const { charges, hasNextPage } = await client.charges.list({
   customerId: 'cust_123',
   appId: 'app_123',
 });
-
-// Retrieve a charge
-const { charge } = await client.charges.retrieve('charge_123');
 ```
 
 ### Users
@@ -1129,63 +1172,417 @@ const { organization } = await client.organization.retrieve();
 
 ### Documentation
 
+Manage documentation collections, groups, pages, repositories, and the doc tree:
+
 ```typescript
-// List documentation collections
+// --- Collections ---
 const { collections } = await client.docs.listCollections();
-
-// Retrieve a collection
 const { collection } = await client.docs.retrieveCollection('collection_123');
+const { collection } = await client.docs.createCollection({
+  name: 'API Docs',
+  slug: 'api-docs',
+  description: 'API documentation',
+});
+const { collection } = await client.docs.updateCollection('collection_123', {
+  name: 'Updated API Docs',
+});
+await client.docs.deleteCollection('collection_123');
 
-// List documentation pages
+// --- Groups ---
+const { groups } = await client.docs.listGroups();
+const { group } = await client.docs.retrieveGroup('group_123');
+const { group } = await client.docs.createGroup({ name: 'Guides' });
+const { group } = await client.docs.updateGroup('group_123', { name: 'Updated Guides' });
+await client.docs.deleteGroup('group_123');
+
+// --- Pages ---
 const { pages } = await client.docs.listPages({
   collectionId: 'collection_123',
 });
-
-// Retrieve a page
 const { page } = await client.docs.retrievePage('page_123');
-
-// Create a page
 const { page } = await client.docs.createPage({
   title: 'Getting Started',
   content: '# Getting Started\n\nWelcome to our docs...',
   collectionId: 'collection_123',
 });
-
-// Update a page
 const { page } = await client.docs.updatePage('page_123', {
   content: 'Updated content',
 });
-
-// Delete a page
+const { page } = await client.docs.publishPage('page_123');
+const { page } = await client.docs.archivePage('page_123');
 await client.docs.deletePage('page_123');
+
+// --- Tree ---
+const { tree } = await client.docs.getTree();
+
+// --- Repositories ---
+const { repositories } = await client.docs.listRepositories();
+const { repository } = await client.docs.retrieveRepository('repo_123');
 ```
 
 ### Entities
 
-Generic entity management:
+Unified search across contacts and customers:
 
 ```typescript
-// List entities
-const { entities } = await client.entities.list({
-  type: 'custom_entity',
+// Search entities (returns contacts and customers in a single result set)
+const { entities, hasNextPage } = await client.entities.search({
+  search: 'acme',
+  take: 25,
 });
 
-// Retrieve an entity
-const { entity } = await client.entities.retrieve('entity_123');
+// Each entity has a _type discriminator
+entities.forEach((entity) => {
+  if (entity._type === 'customer') {
+    console.log('Customer:', entity.name, entity.domain);
+  } else if (entity._type === 'contact') {
+    console.log('Contact:', entity.name, entity.email);
+  }
+});
+```
 
-// Create an entity
-const { entity } = await client.entities.create({
-  type: 'custom_entity',
-  data: { field1: 'value1' },
+### Meetings
+
+Record, transcribe, and analyze meetings with AI enrichment:
+
+```typescript
+// List meetings
+const { meetings, hasNextPage } = await client.meetings.list({
+  dealId: 'deal_123',
+  customerId: 'cust_123',
+  platform: 'google_meet', // 'google_meet' | 'zoom' | 'teams'
+  startTimeFrom: '2024-01-01T00:00:00Z',
+  startTimeTo: '2024-12-31T23:59:59Z',
+  search: 'quarterly review',
+  includeArchived: false,
 });
 
-// Update an entity
-const { entity } = await client.entities.update('entity_123', {
-  data: { field1: 'updated_value' },
+// Retrieve a meeting (includes attendees, transcript, AI insights)
+const meeting = await client.meetings.retrieve('meeting_123');
+
+// Create a meeting with attendees and transcript
+const meeting = await client.meetings.create({
+  meetingData: {
+    title: 'Q1 Review',
+    platform: 'zoom',
+    startTime: '2024-01-15T14:00:00Z',
+    endTime: '2024-01-15T15:00:00Z',
+    duration: 3600,
+    dealId: 'deal_123',
+    customerId: 'cust_123',
+  },
+  attendees: [
+    { name: 'John Doe', email: 'john@acme.com', externalId: 'A' },
+    { name: 'Jane Smith', email: 'jane@company.com', externalId: 'B' },
+  ],
+  transcript: {
+    language: 'en',
+    utterances: [
+      { attendeeId: 'A', text: 'Welcome to the review.', startTime: 0, endTime: 3000, sequence: 1 },
+      { attendeeId: 'B', text: 'Thanks for having me.', startTime: 3500, endTime: 6000, sequence: 2 },
+    ],
+  },
 });
 
-// Delete an entity
-await client.entities.del('entity_123');
+// Update a meeting
+const meeting = await client.meetings.update('meeting_123', {
+  title: 'Q1 Business Review',
+  dealId: 'deal_456',
+});
+
+// Delete a meeting
+await client.meetings.del('meeting_123');
+
+// --- Recording Upload & Transcription Workflow ---
+
+// Step 1: Get a signed upload URL
+const { uploadUrl, recordingKey, expiresIn } = await client.meetings.getUploadUrl('meeting_123', 'recording.webm');
+
+// Step 2: Upload the file to the signed URL (use fetch/axios)
+await fetch(uploadUrl, { method: 'PUT', body: recordingFile });
+
+// Step 3: Start transcription
+const meeting = await client.meetings.startTranscription('meeting_123', { recordingKey });
+
+// Step 4: Check transcription status
+const status = await client.meetings.getTranscriptionStatus('meeting_123');
+console.log(status.recordingStatus); // 'pending' | 'processing' | 'ready' | 'failed'
+
+// Get a signed recording playback URL
+const { recordingUrl, expiresIn } = await client.meetings.getRecordingUrl('meeting_123');
+
+// --- Attendee Management ---
+
+// Update an attendee (link to a contact, etc.)
+const { attendee } = await client.meetings.updateAttendee('meeting_123', 'attendee_123', {
+  name: 'John Doe',
+  email: 'john@acme.com',
+  contactId: 'contact_123',
+});
+
+// Update by external ID instead of attendee ID
+const { attendee } = await client.meetings.updateAttendee('meeting_123', 'A', {
+  contactId: 'contact_123',
+}, { useExternalId: true });
+
+// --- AI Task Suggestions ---
+
+// Accept an AI-generated task suggestion (with optional overrides)
+const { task, suggestion } = await client.meetings.acceptTaskSuggestion('meeting_123', 'suggestion_123', {
+  title: 'Custom task title',
+  assigneeId: 'user_123',
+  priority: 'high',
+});
+
+// Dismiss a task suggestion
+await client.meetings.dismissTaskSuggestion('meeting_123', 'suggestion_123');
+```
+
+### AI Agent Runs
+
+Execute AI agents and poll for results:
+
+```typescript
+// Create an agent run (returns immediately with 202 Accepted)
+const { run } = await client.aiAgentRuns.create('agent_123', {
+  input: { customerId: 'cust_123' },
+  context: 'Analyze this customer for churn risk',
+  variables: { tone: 'professional' },
+});
+console.log(run.status); // 'pending'
+
+// Check the run status
+const { run } = await client.aiAgentRuns.retrieve('agent_123', run.id);
+console.log(run.status); // 'pending' | 'running' | 'completed' | 'error'
+
+// Convenience: create and wait for completion (polls automatically)
+const completedRun = await client.aiAgentRuns.createAndWait('agent_123', {
+  input: { query: 'Summarize recent activity' },
+}, {
+  timeout: 60000,    // Max wait time in ms (default: 30000)
+  pollInterval: 2000, // Polling interval in ms (default: 1000)
+});
+console.log(completedRun.response);
+console.log(completedRun.structuredResponse);
+console.log(completedRun.tokenUsage);
+```
+
+### Custom Data
+
+Set and retrieve custom data fields on resources:
+
+```typescript
+// Supported resource types: 'ticket' | 'customer' | 'contact' | 'deal' | 'conversation'
+
+// Set a custom data value
+await client.customData.set({
+  resourceId: 'cust_123',
+  resourceType: 'customer',
+  key: 'industry',
+  value: 'Technology',
+});
+
+// Get a custom data value
+const data = await client.customData.getValue({
+  resourceId: 'cust_123',
+  resourceType: 'customer',
+  key: 'industry',
+});
+console.log(data.value); // 'Technology'
+
+// Delete a custom data value
+await client.customData.del({
+  resourceId: 'cust_123',
+  resourceType: 'customer',
+  key: 'industry',
+});
+```
+
+### Lists
+
+Organize customers and contacts into lists:
+
+```typescript
+// List all lists
+const { lists, hasNextPage } = await client.lists.list({
+  all: true, // Include all lists without pagination
+});
+
+// Retrieve a list with its entities
+const { list, entities, hasNextPage } = await client.lists.retrieve('list_123', {
+  page: 0,
+  take: 25,
+  type: 'customer', // Filter by entity type: 'customer' | 'contact'
+  search: 'acme',
+  sort: 'name',
+  sortDirection: 'asc',
+});
+
+// Create a list
+const { list } = await client.lists.create({
+  name: 'Enterprise Accounts',
+  description: 'Top-tier enterprise customers',
+});
+
+// Update a list
+const { list } = await client.lists.update('list_123', {
+  name: 'Updated Name',
+});
+
+// Delete a list
+await client.lists.del('list_123');
+
+// Add entities to a list
+const { added, skipped } = await client.lists.addEntities('list_123', {
+  customerIds: ['cust_123', 'cust_456'],
+  contactIds: ['contact_123'],
+});
+
+// Remove entities from a list
+const { removed } = await client.lists.removeEntities('list_123', {
+  customerIds: ['cust_456'],
+});
+```
+
+### Timeline Comments
+
+Add comments to customer and contact timelines:
+
+```typescript
+// List timeline comments
+const { timelineComments, hasNextPage } = await client.timelineComments.list({
+  customerId: 'cust_123',
+  // or contactId: 'contact_123',
+});
+
+// Retrieve a comment
+const { timelineComment } = await client.timelineComments.retrieve('comment_123');
+
+// Create a comment with attachments and tagged users
+const { timelineComment } = await client.timelineComments.create({
+  customerId: 'cust_123',
+  body: 'Discussed renewal terms with @John',
+  attachments: [
+    { filename: 'notes.pdf', url: 'https://storage.example.com/notes.pdf' },
+  ],
+  taggedUsers: [
+    { userId: 'user_123' },
+  ],
+});
+
+// Update a comment
+const { timelineComment } = await client.timelineComments.update('comment_123', {
+  body: 'Updated comment text',
+});
+
+// Delete a comment
+await client.timelineComments.del('comment_123');
+```
+
+### Journal Entries
+
+Track journal entries for apps:
+
+```typescript
+// List journal entries
+const { journalEntries, hasNextPage } = await client.journalEntries.list({
+  appId: 'app_123',
+  startDate: '2024-01-01',
+  endDate: '2024-12-31',
+  tags: ['release', 'update'],
+});
+
+// Retrieve a journal entry
+const { journalEntry } = await client.journalEntries.retrieve('entry_123');
+
+// Create a journal entry
+const { journalEntry } = await client.journalEntries.create({
+  date: '2024-01-15',
+  title: 'v2.0 Release',
+  description: 'Major release with new billing features',
+  appId: 'app_123',
+  tags: ['release'],
+  url: 'https://changelog.example.com/v2',
+  emoji: '🚀',
+});
+
+// Update a journal entry
+const { journalEntry } = await client.journalEntries.update('entry_123', {
+  description: 'Updated description',
+});
+
+// Delete a journal entry
+await client.journalEntries.del('entry_123');
+```
+
+### Email Unsubscribe Groups
+
+Manage email unsubscribe groups and their members:
+
+```typescript
+// List unsubscribe groups
+const { unsubscribeGroups } = await client.emailUnsubscribeGroups.list();
+
+// Retrieve an unsubscribe group
+const { unsubscribeGroup } = await client.emailUnsubscribeGroups.retrieve('group_123');
+
+// List members of a group
+const { members, hasNextPage } = await client.emailUnsubscribeGroups.listMembers('group_123');
+
+// Add members to a group
+const result = await client.emailUnsubscribeGroups.addMembers('group_123', {
+  emails: ['user1@example.com', 'user2@example.com'],
+});
+
+// Remove multiple members
+await client.emailUnsubscribeGroups.removeMembers('group_123', {
+  emails: ['user1@example.com'],
+});
+
+// Remove a single member by ID
+await client.emailUnsubscribeGroups.removeMember('group_123', 'member_123');
+```
+
+### Flow Extensions
+
+Extend automation flows with custom actions:
+
+```typescript
+// List flow extension actions
+const { actions, hasNextPage } = await client.flowExtensions.listActions({
+  enabled: true,
+});
+
+// Retrieve an action
+const { action } = await client.flowExtensions.retrieveAction('action_123');
+
+// Create a custom action
+const { action } = await client.flowExtensions.createAction({
+  name: 'Send Slack Notification',
+  description: 'Posts a message to a Slack channel',
+  key: 'send_slack_notification',
+  schema: {
+    channel: { type: 'string', required: true },
+    message: { type: 'string', required: true },
+  },
+  callbackUrl: 'https://your-app.com/flow-actions/slack',
+  enabled: true,
+});
+
+// Update an action
+const { action } = await client.flowExtensions.updateAction('action_123', {
+  description: 'Updated description',
+  enabled: false,
+});
+
+// Delete an action
+await client.flowExtensions.deleteAction('action_123');
+
+// Update a flow action run status (called from your callback handler)
+const { run } = await client.flowExtensions.updateActionRun('run_123', {
+  status: 'completed', // 'pending' | 'running' | 'completed' | 'failed'
+  output: { messageId: 'slack_msg_123' },
+});
 ```
 
 ## Pagination
@@ -1212,6 +1609,7 @@ import {
   MantleAPIError,
   MantleAuthenticationError,
   MantlePermissionError,
+  MantleNotFoundError,
   MantleValidationError,
   MantleRateLimitError,
 } from '@heymantle/core-api-client';
@@ -1225,6 +1623,9 @@ try {
   } else if (error instanceof MantlePermissionError) {
     // Handle permission error (403)
     console.log('Access denied');
+  } else if (error instanceof MantleNotFoundError) {
+    // Handle not found error (404)
+    console.log('Resource not found');
   } else if (error instanceof MantleValidationError) {
     // Handle validation error (422)
     console.log('Validation failed:', error.details);
@@ -1246,43 +1647,181 @@ All types are exported for use in your application:
 import type {
   // Client config
   MantleCoreClientConfig,
+  PaginatedResponse,
+  ListParams,
+  DeleteResponse,
 
-  // Entities
+  // Customers
   Customer,
+  CustomerListParams,
+  CustomerListResponse,
+  CustomerCreateParams,
+  CustomerUpdateParams,
+  AccountOwner,
+  CustomField,
+
+  // Contacts
   Contact,
+  ContactCreateParams,
+  ContactCreateResponse,
+  SocialProfile,
+  SocialProfileType,
+
+  // Deals
   Deal,
+  DealListParams,
+  DealListResponse,
+  DealCreateParams,
+  DealUpdateParams,
+  DealCustomerInput,
+  DealContactInput,
+  DealFlow,
+  DealStage,
+  DealActivity,
+  DealEvent,
+  DealEventCreateParams,
+
+  // Subscriptions
   Subscription,
+
+  // Tickets
   Ticket,
   TicketMessage,
+  TicketCreateParams,
+  Channel,
+
+  // Apps
   App,
   Plan,
+  PlanCreateParams,
   Feature,
+  UsageMetric,
+  Review,
+  AppEvent,
+
+  // Affiliates
   Affiliate,
   AffiliateProgram,
   AffiliateCommission,
   AffiliatePayout,
   AffiliateReferral,
 
-  // Params
-  CustomerCreateParams,
-  CustomerUpdateParams,
-  CustomerListParams,
-  DealCreateParams,
-  DealCustomerInput,
-  DealContactInput,
-  TicketCreateParams,
-  PlanCreateParams,
+  // Meetings
+  Meeting,
+  MeetingAttendee,
+  MeetingTranscript,
+  MeetingUtterance,
+  MeetingCreateParams,
+  MeetingUpdateParams,
+  MeetingUploadUrlResponse,
+  MeetingTranscriptionStatusResponse,
+  MeetingKeyPoint,
+  MeetingDecision,
+  MeetingOpenQuestion,
+  MeetingTopic,
+  SentimentDataPoint,
+  MeetingDealInsights,
+  MeetingTaskSuggestion,
+  AcceptTaskSuggestionParams,
+  AcceptTaskSuggestionResponse,
 
-  // Responses
-  CustomerListResponse,
-  DealListResponse,
-  MetricsResponse,
-  PaginatedResponse,
+  // AI Agents
+  AgentRun,
+  AgentRunStatus,
+  AgentRunTokenUsage,
+  AgentRunCreateParams,
 
-  // Enums/Types
+  // Tasks
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskCreateParams,
+  TaskUpdateResponse,
+  DealProgression,
+  TodoItem,
+  TodoItemCreateParams,
+  TodoItemUpdateParams,
+
+  // Lists
+  List,
+  ListEntity,
+  ListCreateParams,
+  ListAddEntitiesParams,
+  ListRemoveEntitiesParams,
+
+  // Timeline Comments
+  TimelineComment,
+  TimelineCommentCreateParams,
+  TimelineCommentAttachmentInput,
+  TimelineCommentTaggedUserInput,
+
+  // Journal Entries
+  JournalEntry,
+  JournalEntryCreateParams,
+
+  // Documentation
+  DocCollection,
+  DocGroup,
+  DocPage,
+  DocPageStatus,
+  DocTreeNode,
+  DocTreeResponse,
+  DocRepository,
+
+  // Entities (unified search)
+  Entity,
+  EntityType,
+  ContactEntity,
+  CustomerEntity,
+  EntitiesSearchParams,
+
+  // Custom Data
+  CustomDataResourceType,
+  CustomDataSetParams,
+  CustomDataResponse,
+
+  // Email
+  EmailUnsubscribeGroup,
+  EmailUnsubscribeGroupMember,
+
+  // Flow Extensions
+  FlowExtensionAction,
+  FlowActionRun,
+  FlowActionRunStatus,
+
+  // Flows
+  Flow,
+  FlowStatus,
+
+  // Metrics
   DateRangeType,
   MetricType,
-  SocialProfileType,
+  MetricsResponse,
+  SalesMetrics,
+  SalesMetricsResponse,
+
+  // Organizations & Users
+  Organization,
+  User,
+  Agent,
+
+  // Companies
+  Company,
+
+  // Customer Segments
+  CustomerSegment,
+
+  // Webhooks
+  Webhook,
+  WebhookTopic,
+
+  // Usage Events
+  UsageEvent,
+  UsageEventCreateParams,
+
+  // Transactions & Charges
+  Transaction,
+  Charge,
 
   // Middleware
   Middleware,
