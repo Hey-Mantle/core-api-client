@@ -36,3 +36,4 @@ export { EmailUnsubscribeGroupsResource } from './email-unsubscribe-groups';
 export { FlowExtensionsResource } from './flow-extensions';
 export { AiAgentRunsResource } from './ai-agent-runs';
 export { MeetingsResource } from './meetings';
+export { SyncedEmailsResource } from './synced-emails';
