@@ -385,3 +385,15 @@ export type {
   AcceptTaskSuggestionParams,
   AcceptTaskSuggestionResponse,
 } from './meetings';
+
+// Synced email types
+export type {
+  SyncedEmail,
+  SyncedEmailMessage,
+  SyncedEmailListParams,
+  SyncedEmailListResponse,
+  SyncedEmailMessageInput,
+  SyncedEmailCreateParams,
+  SyncedEmailUpdateParams,
+  SyncedEmailAddMessagesParams,
+} from './synced-emails';

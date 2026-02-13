@@ -48,6 +48,7 @@ import { EmailUnsubscribeGroupsResource } from './resources/email-unsubscribe-gr
 import { FlowExtensionsResource } from './resources/flow-extensions';
 import { AiAgentRunsResource } from './resources/ai-agent-runs';
 import { MeetingsResource } from './resources/meetings';
+import { SyncedEmailsResource } from './resources/synced-emails';
 
 /**
  * Mantle Core API Client
@@ -113,6 +114,7 @@ export class MantleCoreClient {
   public readonly flowExtensions: FlowExtensionsResource;
   public readonly aiAgentRuns: AiAgentRunsResource;
   public readonly meetings: MeetingsResource;
+  public readonly syncedEmails: SyncedEmailsResource;
 
   constructor(config: MantleCoreClientConfig) {
     if (!config.apiKey && !config.accessToken) {
@@ -178,6 +180,7 @@ export class MantleCoreClient {
     this.flowExtensions = new FlowExtensionsResource(this);
     this.aiAgentRuns = new AiAgentRunsResource(this);
     this.meetings = new MeetingsResource(this);
+    this.syncedEmails = new SyncedEmailsResource(this);
   }
 
   /**
