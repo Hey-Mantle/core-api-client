@@ -6,7 +6,7 @@ export class MeetingsResource extends BaseResource {
     return this.unwrap(this.api.GET('/meetings', { params: { query: params } }));
   }
 
-  async retrieve(meetingId: string) {
+  async get(meetingId: string) {
     return this.unwrap(this.api.GET('/meetings/{id}', { params: { path: { id: meetingId } } }));
   }
 

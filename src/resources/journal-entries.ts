@@ -13,9 +13,9 @@ export class JournalEntriesResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single journal entry by ID
+   * Get a single journal entry by ID
    */
-  async retrieve(entryId: string, params?: paths['/journal_entries/{id}']['get']['parameters']['query']) {
+  async get(entryId: string, params?: paths['/journal_entries/{id}']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/journal_entries/{id}', { params: { path: { id: entryId }, query: params } }));
   }
 

@@ -7,7 +7,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps', { params: { query: params } }));
   }
 
-  async retrieve(appId: string) {
+  async get(appId: string) {
     return this.unwrap(this.api.GET('/apps/{id}', { params: { path: { id: appId } } }));
   }
 
@@ -16,7 +16,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps/{id}/plans', { params: { path: { id: appId }, query: params } }));
   }
 
-  async retrievePlan(appId: string, planId: string) {
+  async getPlan(appId: string, planId: string) {
     return this.unwrap(this.api.GET('/apps/{id}/plans/{planId}', { params: { path: { id: appId, planId } } }));
   }
 
@@ -41,7 +41,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps/{appId}/plans/features', { params: { path: { appId } } }));
   }
 
-  async retrieveFeature(appId: string, featureId: string) {
+  async getFeature(appId: string, featureId: string) {
     return this.unwrap(this.api.GET('/apps/{appId}/plans/features/{featureId}', { params: { path: { appId, featureId } } }));
   }
 
@@ -62,7 +62,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps/{id}/reviews', { params: { path: { id: appId } } }));
   }
 
-  async retrieveReview(appId: string, reviewId: string) {
+  async getReview(appId: string, reviewId: string) {
     return this.unwrap(this.api.GET('/apps/{id}/reviews/{reviewId}', { params: { path: { id: appId, reviewId } } }));
   }
 
@@ -71,7 +71,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps/{id}/usage_metrics', { params: { path: { id: appId } } }));
   }
 
-  async retrieveUsageMetric(appId: string, usageMetricId: string) {
+  async getUsageMetric(appId: string, usageMetricId: string) {
     return this.unwrap(this.api.GET('/apps/{id}/usage_metrics/{usageMetricId}', { params: { path: { id: appId, usageMetricId } } }));
   }
 
@@ -92,7 +92,7 @@ export class AppsResource extends BaseResource {
     return this.unwrap(this.api.GET('/apps/{id}/app_events', { params: { path: { id: appId }, query: params } }));
   }
 
-  async retrieveAppEvent(appId: string, appEventId: string) {
+  async getAppEvent(appId: string, appEventId: string) {
     return this.unwrap(this.api.GET('/apps/{id}/app_events/{appEventId}', { params: { path: { id: appId, appEventId } } }));
   }
 

@@ -6,7 +6,7 @@ export class ListsResource extends BaseResource {
     return this.unwrap(this.api.GET('/lists', { params: { query: params } }));
   }
 
-  async retrieve(listId: string) {
+  async get(listId: string) {
     return this.unwrap(this.api.GET('/lists/{id}', { params: { path: { id: listId } } }));
   }
 

@@ -13,9 +13,9 @@ export class FlowsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single flow by ID
+   * Get a single flow by ID
    */
-  async retrieve(flowId: string) {
+  async get(flowId: string) {
     return this.unwrap(this.api.GET('/flows/{id}', { params: { path: { id: flowId } } }));
   }
 

@@ -1,13 +1,13 @@
 import { BaseResource } from './base';
 
 /**
- * Resource for retrieving organization info
+ * Resource for getting organization info
  */
 export class OrganizationResource extends BaseResource {
   /**
    * Get organization details
    */
-  async retrieve() {
+  async get() {
     return this.unwrap(this.api.GET('/organization'));
   }
 }

@@ -6,7 +6,7 @@ export class DealActivitiesResource extends BaseResource {
     return this.unwrap(this.api.GET('/deal_activities', { params: { query: params } }));
   }
 
-  async retrieve(dealActivityId: string) {
+  async get(dealActivityId: string) {
     return this.unwrap(this.api.GET('/deal_activities/{id}', { params: { path: { id: dealActivityId } } }));
   }
 

@@ -13,9 +13,9 @@ export class AffiliatePayoutsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single affiliate payout by ID
+   * Get a single affiliate payout by ID
    */
-  async retrieve(payoutId: string) {
+  async get(payoutId: string) {
     return this.unwrap(this.api.GET('/affiliate_payouts/{id}', { params: { path: { id: payoutId } } }));
   }
 }

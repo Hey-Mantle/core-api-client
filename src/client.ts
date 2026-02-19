@@ -3,6 +3,16 @@ import type { Client, Middleware } from 'openapi-fetch';
 import type { paths } from './generated/api';
 import type { MantleCoreClientConfig } from './types/common';
 
+/**
+ * Fallback for runtimes that don't support AbortSignal.timeout() (e.g. Node &lt; 18.17).
+ * Returns an AbortSignal that aborts after the given ms.
+ */
+function createTimeoutSignal(ms: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
 // Import all resources
 import { CustomersResource } from './resources/customers';
 import { ContactsResource } from './resources/contacts';
@@ -59,7 +69,7 @@ import { SyncedEmailsResource } from './resources/synced-emails';
  * const { customers } = await client.customers.list({ take: 25 });
  *
  * // Get a specific customer
- * const { customer } = await client.customers.retrieve('cust_123');
+ * const { customer } = await client.customers.get('cust_123');
  * ```
  */
 export class MantleCoreClient {
@@ -118,6 +128,8 @@ export class MantleCoreClient {
     this.apiKey = config.apiKey;
     this.accessToken = config.accessToken;
 
+    const timeoutMs = config.timeout ?? 30000;
+
     this._api = createClient<paths>({
       baseUrl: config.baseURL || 'https://api.heymantle.com/v1',
       headers: {
@@ -135,6 +147,19 @@ export class MantleCoreClient {
         return request;
       },
     });
+
+    // Timeout middleware: enforce request timeout via AbortSignal
+    if (timeoutMs > 0) {
+      this._api.use({
+        onRequest: ({ request }) => {
+          const signal =
+            typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal
+              ? AbortSignal.timeout(timeoutMs)
+              : createTimeoutSignal(timeoutMs);
+          return new Request(request, { signal });
+        },
+      });
+    }
 
     // User-provided middleware
     if (config.middleware) {

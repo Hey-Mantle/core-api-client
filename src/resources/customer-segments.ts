@@ -13,9 +13,9 @@ export class CustomerSegmentsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single customer segment by ID
+   * Get a single customer segment by ID
    */
-  async retrieve(segmentId: string) {
+  async get(segmentId: string) {
     return this.unwrap(this.api.GET('/customer_segments/{id}', { params: { path: { id: segmentId } } }));
   }
 }

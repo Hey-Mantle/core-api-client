@@ -6,7 +6,7 @@ export class CustomersResource extends BaseResource {
     return this.unwrap(this.api.GET('/customers', { params: { query: params } }));
   }
 
-  async retrieve(customerId: string) {
+  async get(customerId: string) {
     return this.unwrap(this.api.GET('/customers/{id}', { params: { path: { id: customerId } } }));
   }
 
@@ -50,7 +50,7 @@ export class CustomersResource extends BaseResource {
     return this.unwrap(this.api.POST('/customers/custom_fields', { body: data }));
   }
 
-  async retrieveCustomField(fieldId: string) {
+  async getCustomField(fieldId: string) {
     return this.unwrap(this.api.GET('/customers/custom_fields/{id}', { params: { path: { id: fieldId } } }));
   }
 

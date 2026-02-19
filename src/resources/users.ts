@@ -13,9 +13,9 @@ export class UsersResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single user by ID
+   * Get a single user by ID
    */
-  async retrieve(userId: string) {
+  async get(userId: string) {
     return this.unwrap(this.api.GET('/users/{id}', { params: { path: { id: userId } } }));
   }
 }

@@ -9,7 +9,7 @@ export class SyncedEmailsResource extends BaseResource {
     return this.unwrap(this.untypedApi.GET('/synced_emails', { params: { query: params } }));
   }
 
-  async retrieve(syncedEmailId: string) {
+  async get(syncedEmailId: string) {
     return this.unwrap(this.untypedApi.GET('/synced_emails/{id}', { params: { path: { id: syncedEmailId } } }));
   }
 

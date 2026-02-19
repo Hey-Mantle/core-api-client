@@ -7,7 +7,7 @@ export class TasksResource extends BaseResource {
     return this.unwrap(this.api.GET('/tasks', { params: { query: params } }));
   }
 
-  async retrieve(taskId: string) {
+  async get(taskId: string) {
     return this.unwrap(this.api.GET('/tasks/{id}', { params: { path: { id: taskId } } }));
   }
 
@@ -28,7 +28,7 @@ export class TasksResource extends BaseResource {
     return this.unwrap(this.api.GET('/tasks/{id}/todo-items', { params: { path: { id: taskId } } }));
   }
 
-  async retrieveTodoItem(taskId: string, itemId: string) {
+  async getTodoItem(taskId: string, itemId: string) {
     return this.unwrap(this.api.GET('/tasks/{id}/todo-items/{itemId}', { params: { path: { id: taskId, itemId } } }));
   }
 

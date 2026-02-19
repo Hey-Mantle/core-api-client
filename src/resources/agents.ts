@@ -9,7 +9,7 @@ export class AgentsResource extends BaseResource {
     return this.unwrap(this.untypedApi.GET('/agents', {}));
   }
 
-  async retrieve(agentId: string) {
+  async get(agentId: string) {
     return this.unwrap(this.untypedApi.GET('/agents/{id}', { params: { path: { id: agentId } } }));
   }
 

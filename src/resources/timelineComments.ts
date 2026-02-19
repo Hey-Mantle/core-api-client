@@ -13,9 +13,9 @@ export class TimelineCommentsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single timeline comment by ID
+   * Get a single timeline comment by ID
    */
-  async retrieve(id: string) {
+  async get(id: string) {
     return this.unwrap(this.api.GET('/timeline_comments/{id}', { params: { path: { id } } }));
   }
 

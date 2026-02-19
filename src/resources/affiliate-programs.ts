@@ -13,9 +13,9 @@ export class AffiliateProgramsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single affiliate program by ID
+   * Get a single affiliate program by ID
    */
-  async retrieve(programId: string) {
+  async get(programId: string) {
     return this.unwrap(this.api.GET('/affiliate_programs/{id}', { params: { path: { id: programId } } }));
   }
 

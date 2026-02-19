@@ -13,9 +13,9 @@ export class CompaniesResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single company by ID
+   * Get a single company by ID
    */
-  async retrieve(companyId: string) {
+  async get(companyId: string) {
     return this.unwrap(this.api.GET('/companies/{id}', { params: { path: { id: companyId } } }));
   }
 

@@ -6,7 +6,7 @@ export class AiAgentRunsResource extends BaseResource {
     return this.unwrap(this.api.POST('/ai/agents/{agentId}/runs', { params: { path: { agentId } }, body: data as never }));
   }
 
-  async retrieve(agentId: string, runId: string) {
+  async get(agentId: string, runId: string) {
     return this.unwrap(this.api.GET('/ai/agents/{agentId}/runs/{runId}', { params: { path: { agentId, runId } } }));
   }
 
@@ -25,7 +25,7 @@ export class AiAgentRunsResource extends BaseResource {
 
     const start = Date.now();
     while (Date.now() - start < timeout) {
-      const response = await this.retrieve(agentId, run.id);
+      const response = await this.get(agentId, run.id);
       const agentRun = (response as { run: components['schemas']['AgentRun'] }).run;
       if (agentRun.status === 'completed' || agentRun.status === 'error') {
         return agentRun;

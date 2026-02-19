@@ -13,9 +13,9 @@ export class AffiliateCommissionsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single affiliate commission by ID
+   * Get a single affiliate commission by ID
    */
-  async retrieve(commissionId: string) {
+  async get(commissionId: string) {
     return this.unwrap(this.api.GET('/affiliate_commissions/{id}', { params: { path: { id: commissionId } } }));
   }
 }

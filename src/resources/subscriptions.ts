@@ -13,9 +13,9 @@ export class SubscriptionsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single subscription by ID
+   * Get a single subscription by ID
    */
-  async retrieve(subscriptionId: string) {
+  async get(subscriptionId: string) {
     return this.unwrap(this.api.GET('/subscriptions/{id}', { params: { path: { id: subscriptionId } } }));
   }
 }

@@ -7,7 +7,7 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.GET('/tickets', { params: { query: params } }));
   }
 
-  async retrieve(ticketId: string) {
+  async get(ticketId: string) {
     return this.unwrap(this.api.GET('/tickets/{id}', { params: { path: { id: ticketId } } }));
   }
 
@@ -24,7 +24,7 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.GET('/tickets/{id}/messages', { params: { path: { id: ticketId }, query: params } }));
   }
 
-  async retrieveMessage(ticketId: string, messageId: string) {
+  async getMessage(ticketId: string, messageId: string) {
     return this.unwrap(this.api.GET('/tickets/{id}/messages/{messageId}', { params: { path: { id: ticketId, messageId } } }));
   }
 
@@ -50,7 +50,7 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.GET('/tickets/{id}/loops', { params: { path: { id: ticketId } } }));
   }
 
-  async retrieveLoop(ticketId: string, loopId: string) {
+  async getLoop(ticketId: string, loopId: string) {
     return this.unwrap(this.api.GET('/tickets/{id}/loops/{loopId}', { params: { path: { id: ticketId, loopId } } }));
   }
 }

@@ -13,9 +13,9 @@ export class TransactionsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single transaction by ID
+   * Get a single transaction by ID
    */
-  async retrieve(transactionId: string) {
+  async get(transactionId: string) {
     return this.unwrap(this.api.GET('/transactions/{id}', { params: { path: { id: transactionId } } }));
   }
 }

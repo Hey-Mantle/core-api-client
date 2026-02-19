@@ -6,7 +6,7 @@ export class ContactsResource extends BaseResource {
     return this.unwrap(this.api.GET('/contacts', { params: { query: params } }));
   }
 
-  async retrieve(contactId: string) {
+  async get(contactId: string) {
     return this.unwrap(this.api.GET('/contacts/{id}', { params: { path: { id: contactId } } }));
   }
 

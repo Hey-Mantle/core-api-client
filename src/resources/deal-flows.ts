@@ -6,7 +6,7 @@ export class DealFlowsResource extends BaseResource {
     return this.unwrap(this.api.GET('/deal_flows', { params: { query: params } }));
   }
 
-  async retrieve(dealFlowId: string) {
+  async get(dealFlowId: string) {
     return this.unwrap(this.api.GET('/deal_flows/{id}', { params: { path: { id: dealFlowId } } }));
   }
 

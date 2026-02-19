@@ -41,7 +41,7 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.GET('/docs/pages', { params: { query: params } }));
   }
 
-  async retrievePage(pageId: string) {
+  async getPage(pageId: string) {
     return this.unwrap(this.api.GET('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
   }
 
@@ -62,7 +62,7 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.GET('/docs/repositories', { params: { query: params } }));
   }
 
-  async retrieveRepository(repositoryId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
+  async getRepository(repositoryId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories/{id}', { params: { path: { id: repositoryId }, query: params } }));
   }
 }

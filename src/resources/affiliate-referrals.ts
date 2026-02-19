@@ -13,9 +13,9 @@ export class AffiliateReferralsResource extends BaseResource {
   }
 
   /**
-   * Retrieve a single affiliate referral by ID
+   * Get a single affiliate referral by ID
    */
-  async retrieve(referralId: string) {
+  async get(referralId: string) {
     return this.unwrap(this.api.GET('/affiliate_referrals/{id}', { params: { path: { id: referralId } } }));
   }
 }

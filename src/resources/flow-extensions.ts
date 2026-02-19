@@ -29,7 +29,7 @@ export class FlowExtensionsResource extends BaseResource {
     return this.unwrap(this.api.GET('/flow/extensions/triggers'));
   }
 
-  async retrieveTrigger(handle: string) {
+  async getTrigger(handle: string) {
     return this.unwrap(this.api.GET('/flow/extensions/triggers/{handle}', { params: { path: { handle } } }));
   }
 
