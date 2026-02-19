@@ -46,8 +46,8 @@ export class TicketsResource extends BaseResource {
   }
 
   // Loops
-  async listLoops(ticketId: string) {
-    return this.unwrap(this.api.GET('/tickets/{id}/loops', { params: { path: { id: ticketId } } }));
+  async listLoops(ticketId: string, params?: paths['/tickets/{id}/loops']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tickets/{id}/loops', { params: { path: { id: ticketId }, query: params } }));
   }
 
   async getLoop(ticketId: string, loopId: string) {

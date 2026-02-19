@@ -119,9 +119,9 @@ export class MantleCoreClient {
   public readonly syncedEmails: SyncedEmailsResource;
 
   constructor(config: MantleCoreClientConfig) {
-    if (!config.apiKey && !config.accessToken) {
+    if (!config.apiKey && !config.accessToken && !config.fetch) {
       throw new Error(
-        'MantleCoreClient requires either apiKey or accessToken'
+        'MantleCoreClient requires either apiKey, accessToken, or a custom fetch function'
       );
     }
 
@@ -135,6 +135,7 @@ export class MantleCoreClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      ...(config.fetch ? { fetch: config.fetch } : {}),
     });
 
     // Auth middleware (always first)
