@@ -1,12 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  Flow,
-  FlowListParams,
-  FlowListResponse,
-  FlowCreateParams,
-  FlowUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing flows (email/automation)
@@ -15,42 +8,35 @@ export class FlowsResource extends BaseResource {
   /**
    * List flows with optional filters and pagination
    */
-  async list(params?: FlowListParams): Promise<FlowListResponse> {
-    const response = await this.get<FlowListResponse>('/flows', params);
-    return {
-      flows: response.flows || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/flows']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/flows', { params: { query: params } }));
   }
 
   /**
-   * Retrieve a single flow by ID
+   * Get a single flow by ID
    */
-  async retrieve(flowId: string): Promise<{ flow: Flow }> {
-    return this.get<{ flow: Flow }>(`/flows/${flowId}`);
+  async get(flowId: string) {
+    return this.unwrap(this.api.GET('/flows/{id}', { params: { path: { id: flowId } } }));
   }
 
   /**
    * Create a new flow
    */
-  async create(data: FlowCreateParams): Promise<{ flow: Flow }> {
-    return this.post<{ flow: Flow }>('/flows', data);
+  async create(data: paths['/flows']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/flows', { body: data }));
   }
 
   /**
    * Update an existing flow
    */
-  async update(flowId: string, data: FlowUpdateParams): Promise<{ flow: Flow }> {
-    return this.put<{ flow: Flow }>(`/flows/${flowId}`, data);
+  async update(flowId: string, data: paths['/flows/{id}']['patch']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PATCH('/flows/{id}', { params: { path: { id: flowId } }, body: data }));
   }
 
   /**
    * Delete a flow
    */
-  async del(flowId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/flows/${flowId}`);
+  async del(flowId: string) {
+    return this.unwrap(this.api.DELETE('/flows/{id}', { params: { path: { id: flowId } } }));
   }
 }

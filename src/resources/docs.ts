@@ -1,216 +1,68 @@
 import { BaseResource } from './base';
-import type {
-  DocCollection,
-  DocCollectionCreateParams,
-  DocCollectionUpdateParams,
-  DocGroup,
-  DocGroupCreateParams,
-  DocGroupUpdateParams,
-  DocPage,
-  DocPageListParams,
-  DocPageListResponse,
-  DocPageCreateParams,
-  DocPageUpdateParams,
-  DocTreeResponse,
-  DocRepository,
-  DocRepositoryListParams,
-  DocRepositoryListResponse,
-  DocRepositoryRetrieveParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing documentation (collections, groups, pages)
- */
 export class DocsResource extends BaseResource {
-  // ========== Collections ==========
-
-  /**
-   * List all doc collections
-   */
-  async listCollections(): Promise<{ collections: DocCollection[] }> {
-    return this.get<{ collections: DocCollection[] }>('/docs/collections');
+  // Collections
+  async listCollections(params: paths['/docs/collections']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/collections', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single doc collection
-   */
-  async retrieveCollection(
-    collectionId: string
-  ): Promise<{ collection: DocCollection }> {
-    return this.get<{ collection: DocCollection }>(
-      `/docs/collections/${collectionId}`
-    );
+  async createCollection(data: paths['/docs/collections']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/collections', { body: data }));
   }
 
-  /**
-   * Create a new doc collection
-   */
-  async createCollection(
-    data: DocCollectionCreateParams
-  ): Promise<{ collection: DocCollection }> {
-    return this.post<{ collection: DocCollection }>('/docs/collections', data);
+  async updateCollection(collectionId: string, data: paths['/docs/collections/{collection_id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/collections/{collection_id}', { params: { path: { collection_id: collectionId } }, body: data }));
   }
 
-  /**
-   * Update a doc collection
-   */
-  async updateCollection(
-    collectionId: string,
-    data: DocCollectionUpdateParams
-  ): Promise<{ collection: DocCollection }> {
-    return this.put<{ collection: DocCollection }>(
-      `/docs/collections/${collectionId}`,
-      data
-    );
+  async deleteCollection(collectionId: string) {
+    return this.unwrap(this.api.DELETE('/docs/collections/{collection_id}', { params: { path: { collection_id: collectionId } } }));
   }
 
-  /**
-   * Delete a doc collection
-   */
-  async deleteCollection(collectionId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/docs/collections/${collectionId}`);
+  // Groups
+  async listGroups(params: paths['/docs/groups']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/groups', { params: { query: params } }));
   }
 
-  // ========== Groups ==========
-
-  /**
-   * List all doc groups
-   */
-  async listGroups(): Promise<{ groups: DocGroup[] }> {
-    return this.get<{ groups: DocGroup[] }>('/docs/groups');
+  async createGroup(data: paths['/docs/groups']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/groups', { body: data }));
   }
 
-  /**
-   * Retrieve a single doc group
-   */
-  async retrieveGroup(groupId: string): Promise<{ group: DocGroup }> {
-    return this.get<{ group: DocGroup }>(`/docs/groups/${groupId}`);
+  async updateGroup(groupId: string, data: paths['/docs/groups/{group_id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/groups/{group_id}', { params: { path: { group_id: groupId } }, body: data }));
   }
 
-  /**
-   * Create a new doc group
-   */
-  async createGroup(data: DocGroupCreateParams): Promise<{ group: DocGroup }> {
-    return this.post<{ group: DocGroup }>('/docs/groups', data);
+  async deleteGroup(groupId: string) {
+    return this.unwrap(this.api.DELETE('/docs/groups/{group_id}', { params: { path: { group_id: groupId } } }));
   }
 
-  /**
-   * Update a doc group
-   */
-  async updateGroup(
-    groupId: string,
-    data: DocGroupUpdateParams
-  ): Promise<{ group: DocGroup }> {
-    return this.put<{ group: DocGroup }>(`/docs/groups/${groupId}`, data);
+  // Pages
+  async listPages(params?: paths['/docs/pages']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/pages', { params: { query: params } }));
   }
 
-  /**
-   * Delete a doc group
-   */
-  async deleteGroup(groupId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/docs/groups/${groupId}`);
+  async getPage(pageId: string) {
+    return this.unwrap(this.api.GET('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
   }
 
-  // ========== Pages ==========
-
-  /**
-   * List doc pages with optional filters
-   */
-  async listPages(params?: DocPageListParams): Promise<DocPageListResponse> {
-    const response = await this.get<DocPageListResponse>('/docs/pages', params);
-    return {
-      pages: response.pages || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-    };
+  async createPage(data: paths['/docs/pages']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages', { body: data }));
   }
 
-  /**
-   * Retrieve a single doc page
-   */
-  async retrievePage(pageId: string): Promise<{ page: DocPage }> {
-    return this.get<{ page: DocPage }>(`/docs/pages/${pageId}`);
+  async updatePage(pageId: string, data: paths['/docs/pages/{page_id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/pages/{page_id}', { params: { path: { page_id: pageId } }, body: data }));
   }
 
-  /**
-   * Create a new doc page
-   */
-  async createPage(data: DocPageCreateParams): Promise<{ page: DocPage }> {
-    return this.post<{ page: DocPage }>('/docs/pages', data);
+  async deletePage(pageId: string) {
+    return this.unwrap(this.api.DELETE('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
   }
 
-  /**
-   * Update a doc page
-   */
-  async updatePage(
-    pageId: string,
-    data: DocPageUpdateParams
-  ): Promise<{ page: DocPage }> {
-    return this.put<{ page: DocPage }>(`/docs/pages/${pageId}`, data);
+  // Repositories
+  async listRepositories(params?: paths['/docs/repositories']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/repositories', { params: { query: params } }));
   }
 
-  /**
-   * Publish a doc page
-   */
-  async publishPage(pageId: string): Promise<{ page: DocPage }> {
-    return this.post<{ page: DocPage }>(`/docs/pages/${pageId}/publish`, {});
-  }
-
-  /**
-   * Archive a doc page
-   */
-  async archivePage(pageId: string): Promise<{ page: DocPage }> {
-    return this.post<{ page: DocPage }>(`/docs/pages/${pageId}/archive`, {});
-  }
-
-  /**
-   * Delete a doc page
-   */
-  async deletePage(pageId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/docs/pages/${pageId}`);
-  }
-
-  // ========== Tree ==========
-
-  /**
-   * Get the full documentation tree structure
-   */
-  async getTree(): Promise<DocTreeResponse> {
-    return this.get<DocTreeResponse>('/docs/tree');
-  }
-
-  // ========== Repositories ==========
-
-  /**
-   * List all doc repositories
-   */
-  async listRepositories(
-    params?: DocRepositoryListParams
-  ): Promise<DocRepositoryListResponse> {
-    const response = await this.get<DocRepositoryListResponse>(
-      '/docs/repositories',
-      params
-    );
-    return {
-      repositories: response.repositories || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
-  }
-
-  /**
-   * Retrieve a single doc repository
-   */
-  async retrieveRepository(
-    repositoryId: string,
-    params?: DocRepositoryRetrieveParams
-  ): Promise<{ repository: DocRepository }> {
-    return this.get<{ repository: DocRepository }>(
-      `/docs/repositories/${repositoryId}`,
-      params
-    );
+  async getRepository(repositoryId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/repositories/{id}', { params: { path: { id: repositoryId }, query: params } }));
   }
 }

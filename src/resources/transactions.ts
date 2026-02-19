@@ -1,9 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  Transaction,
-  TransactionListParams,
-  TransactionListResponse,
-} from '../types';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing transactions
@@ -12,26 +8,14 @@ export class TransactionsResource extends BaseResource {
   /**
    * List transactions with optional filters and pagination
    */
-  async list(params?: TransactionListParams): Promise<TransactionListResponse> {
-    const response = await this.get<TransactionListResponse>(
-      '/transactions',
-      params
-    );
-    return {
-      transactions: response.transactions || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/transactions']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/transactions', { params: { query: params } }));
   }
 
   /**
-   * Retrieve a single transaction by ID
+   * Get a single transaction by ID
    */
-  async retrieve(transactionId: string): Promise<{ transaction: Transaction }> {
-    return this.get<{ transaction: Transaction }>(
-      `/transactions/${transactionId}`
-    );
+  async get(transactionId: string) {
+    return this.unwrap(this.api.GET('/transactions/{id}', { params: { path: { id: transactionId } } }));
   }
 }

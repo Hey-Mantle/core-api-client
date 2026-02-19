@@ -1,53 +1,24 @@
 import { BaseResource } from './base';
-import type {
-  DealFlow,
-  DealFlowCreateParams,
-  DealFlowUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing deal flows
- */
 export class DealFlowsResource extends BaseResource {
-  /**
-   * List all deal flows
-   */
-  async list(): Promise<{ dealFlows: DealFlow[] }> {
-    return this.get<{ dealFlows: DealFlow[] }>('/deal_flows');
+  async list(params?: paths['/deal_flows']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/deal_flows', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single deal flow by ID
-   */
-  async retrieve(dealFlowId: string): Promise<{ dealFlow: DealFlow }> {
-    return this.get<{ dealFlow: DealFlow }>(`/deal_flows/${dealFlowId}`);
+  async get(dealFlowId: string) {
+    return this.unwrap(this.api.GET('/deal_flows/{id}', { params: { path: { id: dealFlowId } } }));
   }
 
-  /**
-   * Create a new deal flow
-   */
-  async create(data: DealFlowCreateParams): Promise<{ dealFlow: DealFlow }> {
-    return this.post<{ dealFlow: DealFlow }>('/deal_flows', data);
+  async create(data: paths['/deal_flows']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/deal_flows', { body: data }));
   }
 
-  /**
-   * Update an existing deal flow
-   */
-  async update(
-    dealFlowId: string,
-    data: DealFlowUpdateParams
-  ): Promise<{ dealFlow: DealFlow }> {
-    return this.put<{ dealFlow: DealFlow }>(
-      `/deal_flows/${dealFlowId}`,
-      data
-    );
+  async update(dealFlowId: string, data: paths['/deal_flows/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/deal_flows/{id}', { params: { path: { id: dealFlowId } }, body: data }));
   }
 
-  /**
-   * Delete a deal flow
-   */
-  async del(dealFlowId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/deal_flows/${dealFlowId}`);
+  async del(dealFlowId: string) {
+    return this.unwrap(this.api.DELETE('/deal_flows/{id}', { params: { path: { id: dealFlowId } } }));
   }
 }

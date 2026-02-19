@@ -1,4 +1,3 @@
-export { sanitizeObject, toQueryString } from './sanitize';
 export {
   MantleAPIError,
   MantleAuthenticationError,

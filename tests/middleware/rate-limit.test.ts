@@ -1,23 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createRateLimitMiddleware, RateLimiter } from '../../src/middleware/rate-limit'
-import { MantleRateLimitError } from '../../src/utils/errors'
-import type { MiddlewareContext } from '../../src/middleware/types'
+import {
+  createRateLimitMiddleware,
+  RateLimiter,
+} from '../../src/middleware/rate-limit'
 
-// Helper to create a mock middleware context
-function createMockContext(overrides: Partial<MiddlewareContext> = {}): MiddlewareContext {
-  return {
-    request: {
-      url: 'https://api.example.com/test',
-      method: 'GET',
-      headers: {},
-      endpoint: '/test',
-    },
-    retry: false,
-    retryCount: 0,
-    maxRetries: 3,
-    updateAuth: vi.fn(),
-    ...overrides,
-  }
+// Mock fetch globally for retry requests
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
+
+function createMockRequest(
+  url = 'https://api.example.com/test',
+  init: RequestInit = {}
+): Request {
+  return new Request(url, {
+    method: 'GET',
+    ...init,
+  })
+}
+
+function createMockResponse(
+  status: number,
+  body: unknown = {},
+  headers: Record<string, string> = {}
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: new Headers(headers),
+  })
 }
 
 describe('RateLimiter', () => {
@@ -68,14 +77,12 @@ describe('RateLimiter', () => {
         throttleThreshold: 0.9,
       })
 
-      // Record some requests
       limiter.recordRequest()
       limiter.recordRequest()
 
       // Advance time by 61 seconds (past the minute window)
       vi.advanceTimersByTime(61_000)
 
-      // Record one more request
       limiter.recordRequest()
 
       const usage = limiter.getUsage()
@@ -177,6 +184,7 @@ describe('RateLimiter', () => {
 describe('createRateLimitMiddleware', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    mockFetch.mockReset()
   })
 
   afterEach(() => {
@@ -184,158 +192,267 @@ describe('createRateLimitMiddleware', () => {
   })
 
   describe('with no features enabled', () => {
-    it('passes through to next without modification', async () => {
+    it('onRequest returns the request unchanged', async () => {
       const middleware = createRateLimitMiddleware()
-      const ctx = createMockContext()
-      const next = vi.fn().mockResolvedValue(undefined)
+      const request = createMockRequest()
 
-      await middleware(ctx, next)
+      const result = await middleware.onRequest!({
+        request,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      expect(next).toHaveBeenCalledOnce()
-      expect(ctx.retry).toBe(false)
+      expect(result).toBe(request)
     })
 
-    it('re-throws errors from next', async () => {
+    it('onResponse returns undefined for non-429', async () => {
       const middleware = createRateLimitMiddleware()
-      const ctx = createMockContext()
-      const error = new Error('Test error')
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response = createMockResponse(200)
 
-      await expect(middleware(ctx, next)).rejects.toThrow('Test error')
+      const result = await middleware.onResponse!({
+        request,
+        response,
+        options: {},
+        schemaPath: '/test',
+      } as never)
+
+      expect(result).toBeUndefined()
     })
   })
 
   describe('with enableRetry: true', () => {
-    it('does nothing when no error occurs', async () => {
+    it('returns undefined for non-429 responses', async () => {
       const middleware = createRateLimitMiddleware({ enableRetry: true })
-      const ctx = createMockContext()
-      const next = vi.fn().mockResolvedValue(undefined)
+      const request = createMockRequest()
+      const response = createMockResponse(200)
 
-      await middleware(ctx, next)
+      const result = await middleware.onResponse!({
+        request,
+        response,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      expect(next).toHaveBeenCalledOnce()
-      expect(ctx.retry).toBe(false)
+      expect(result).toBeUndefined()
     })
 
-    it('catches MantleRateLimitError and sets ctx.retry = true', async () => {
+    it('retries on 429 and returns new response', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
         jitter: false,
         baseDelay: 100,
       })
-      const ctx = createMockContext()
-      const error = new MantleRateLimitError('Rate limited', 1)
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response429 = createMockResponse(429)
+      const successResponse = createMockResponse(200, { success: true })
+      mockFetch.mockResolvedValueOnce(successResponse)
 
-      const promise = middleware(ctx, next)
-      await vi.advanceTimersByTimeAsync(1000) // retryAfter is 1 second
-      await promise
+      const promise = middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      expect(ctx.retry).toBe(true)
+      // Advance past the delay
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
+
+      expect(result).toBe(successResponse)
+      expect(mockFetch).toHaveBeenCalledTimes(1)
     })
 
-    it('uses retryAfter from error when available', async () => {
+    it('uses Retry-After header when available', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
         jitter: false,
       })
-      const ctx = createMockContext()
-      const error = new MantleRateLimitError('Rate limited', 5) // 5 seconds
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response429 = createMockResponse(429, {}, { 'Retry-After': '5' })
+      const successResponse = createMockResponse(200)
+      mockFetch.mockResolvedValueOnce(successResponse)
 
-      const startTime = Date.now()
-      const promise = middleware(ctx, next)
+      let resolved = false
+      const promise = middleware
+        .onResponse!({
+          request,
+          response: response429,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        .then((r) => {
+          resolved = true
+          return r
+        })
 
-      // Advance less than retryAfter - should not resolve yet
+      // Should not resolve before 5 seconds
       await vi.advanceTimersByTimeAsync(4000)
+      expect(resolved).toBe(false)
 
-      // Advance past retryAfter
+      // Should resolve after 5 seconds
       await vi.advanceTimersByTimeAsync(1500)
       await promise
-
-      expect(ctx.retry).toBe(true)
+      expect(resolved).toBe(true)
     })
 
-    it('uses exponential backoff when no retryAfter', async () => {
+    it('uses exponential backoff when no Retry-After', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
         baseDelay: 1000,
         exponentialBackoff: true,
         jitter: false,
       })
+      const request = createMockRequest()
+      const response429 = createMockResponse(429)
 
-      // First retry (retryCount = 0): 1000 * 2^0 = 1000ms
-      const ctx1 = createMockContext({ retryCount: 0 })
-      const error = new MantleRateLimitError('Rate limited')
-      const next1 = vi.fn().mockRejectedValue(error)
-
-      const promise1 = middleware(ctx1, next1)
+      // First retry: 1000 * 2^0 = 1000ms
+      mockFetch.mockResolvedValueOnce(createMockResponse(429)) // still 429
+      const promise1 = middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
       await vi.advanceTimersByTimeAsync(1000)
       await promise1
 
-      expect(ctx1.retry).toBe(true)
+      // Second retry: 1000 * 2^1 = 2000ms
+      mockFetch.mockResolvedValueOnce(createMockResponse(200))
+      let resolved = false
+      const promise2 = middleware
+        .onResponse!({
+          request,
+          response: response429,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        .then((r) => {
+          resolved = true
+          return r
+        })
 
-      // Second retry (retryCount = 1): 1000 * 2^1 = 2000ms
-      const ctx2 = createMockContext({ retryCount: 1 })
-      const next2 = vi.fn().mockRejectedValue(error)
-
-      const promise2 = middleware(ctx2, next2)
-      await vi.advanceTimersByTimeAsync(2000)
+      await vi.advanceTimersByTimeAsync(1500)
+      expect(resolved).toBe(false)
+      await vi.advanceTimersByTimeAsync(1000)
       await promise2
-
-      expect(ctx2.retry).toBe(true)
+      expect(resolved).toBe(true)
     })
 
-    it('respects maxRetries limit and re-throws after exceeded', async () => {
+    it('stops retrying after maxRetries', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
         maxRetries: 2,
+        baseDelay: 100,
+        jitter: false,
       })
-      const ctx = createMockContext({ retryCount: 2 }) // Already at max
-      const error = new MantleRateLimitError('Rate limited', 1)
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response429 = createMockResponse(429)
 
-      await expect(middleware(ctx, next)).rejects.toThrow(MantleRateLimitError)
-      expect(ctx.retry).toBe(false)
+      // Exhaust retries - each retry returns another 429
+      mockFetch.mockResolvedValue(createMockResponse(429))
+
+      for (let i = 0; i < 2; i++) {
+        const promise = middleware.onResponse!({
+          request,
+          response: response429,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        await vi.advanceTimersByTimeAsync(5000)
+        await promise
+      }
+
+      // Third attempt should return undefined (max retries exceeded)
+      const result = await middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
+      expect(result).toBeUndefined()
     })
 
-    it('ignores non-rate-limit errors', async () => {
-      const middleware = createRateLimitMiddleware({ enableRetry: true })
-      const ctx = createMockContext()
-      const error = new Error('Some other error')
-      const next = vi.fn().mockRejectedValue(error)
-
-      await expect(middleware(ctx, next)).rejects.toThrow('Some other error')
-      expect(ctx.retry).toBe(false)
-    })
-
-    it('does not apply jitter to server-provided retryAfter', async () => {
-      // This test verifies that when a server provides a retryAfter value,
-      // we wait exactly that amount (not less due to jitter)
+    it('resets retry count after successful response', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
-        jitter: true, // Jitter enabled, but should not reduce below retryAfter
+        maxRetries: 1,
+        baseDelay: 100,
+        jitter: false,
       })
-      const ctx = createMockContext()
-      const error = new MantleRateLimitError('Rate limited', 5) // 5 seconds
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response429 = createMockResponse(429)
+
+      // First 429 → retry succeeds
+      mockFetch.mockResolvedValueOnce(createMockResponse(200))
+      const promise = middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
+      await vi.advanceTimersByTimeAsync(200)
+      await promise
+
+      // Second 429 → should still retry (counter was reset)
+      mockFetch.mockResolvedValueOnce(createMockResponse(200))
+      const promise2 = middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
+      await vi.advanceTimersByTimeAsync(200)
+      const result2 = await promise2
+      expect(result2).toBeDefined()
+    })
+
+    it('ignores non-429 responses even with enableRetry', async () => {
+      const middleware = createRateLimitMiddleware({ enableRetry: true })
+      const request = createMockRequest()
+      const response500 = createMockResponse(500)
+
+      const result = await middleware.onResponse!({
+        request,
+        response: response500,
+        options: {},
+        schemaPath: '/test',
+      } as never)
+
+      expect(result).toBeUndefined()
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('does not apply jitter to server-provided Retry-After', async () => {
+      const middleware = createRateLimitMiddleware({
+        enableRetry: true,
+        jitter: true,
+      })
+      const request = createMockRequest()
+      const response429 = createMockResponse(429, {}, { 'Retry-After': '5' })
+      mockFetch.mockResolvedValueOnce(createMockResponse(200))
 
       let resolved = false
-      const promise = middleware(ctx, next).then(() => {
-        resolved = true
-      })
+      const promise = middleware
+        .onResponse!({
+          request,
+          response: response429,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        .then((r) => {
+          resolved = true
+          return r
+        })
 
-      // If jitter were applied incorrectly, delay could be as low as 3750ms (5000 * 0.75)
-      // We verify the request does NOT resolve before 5000ms
+      // If jitter were applied, delay could be as low as 3750ms (5000 * 0.75)
+      // Verify request does NOT resolve before 5000ms
       await vi.advanceTimersByTimeAsync(4500)
       expect(resolved).toBe(false)
 
-      // Should resolve at exactly 5000ms (the server-specified time)
       await vi.advanceTimersByTimeAsync(500)
       await promise
-
       expect(resolved).toBe(true)
-      expect(ctx.retry).toBe(true)
     })
   })
 
@@ -346,12 +463,15 @@ describe('createRateLimitMiddleware', () => {
         requestsPerMinute: 100,
         throttleThreshold: 0.9,
       })
-      const ctx = createMockContext()
-      const next = vi.fn().mockResolvedValue(undefined)
+      const request = createMockRequest()
 
-      await middleware(ctx, next)
+      const result = await middleware.onRequest!({
+        request,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      expect(next).toHaveBeenCalledOnce()
+      expect(result).toBe(request)
     })
 
     it('delays request when approaching limits', async () => {
@@ -362,21 +482,34 @@ describe('createRateLimitMiddleware', () => {
         throttleThreshold: 0.9, // 9 requests threshold
       })
 
-      // Make 9 requests to hit threshold
+      // Make 9 requests to hit threshold — each call invokes both onRequest and onResponse
       for (let i = 0; i < 9; i++) {
-        const ctx = createMockContext()
-        const next = vi.fn().mockResolvedValue(undefined)
-        await middleware(ctx, next)
+        const req = createMockRequest()
+        await middleware.onRequest!({
+          request: req,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        await middleware.onResponse!({
+          request: req,
+          response: createMockResponse(200),
+          options: {},
+          schemaPath: '/test',
+        } as never)
       }
 
       // Next request should be delayed
-      const ctx = createMockContext()
-      const next = vi.fn().mockResolvedValue(undefined)
+      const request = createMockRequest()
       let resolved = false
-
-      const promise = middleware(ctx, next).then(() => {
-        resolved = true
-      })
+      const promise = middleware
+        .onRequest!({
+          request,
+          options: {},
+          schemaPath: '/test',
+        } as never)
+        .then(() => {
+          resolved = true
+        })
 
       // Should not resolve immediately
       await vi.advanceTimersByTimeAsync(100)
@@ -385,49 +518,38 @@ describe('createRateLimitMiddleware', () => {
       // Advance past the delay
       await vi.advanceTimersByTimeAsync(60_000)
       await promise
-
       expect(resolved).toBe(true)
-      expect(next).toHaveBeenCalled()
     })
 
-    it('records requests after completion', async () => {
+    it('records requests in onResponse', async () => {
       const middleware = createRateLimitMiddleware({
         enableThrottle: true,
         requestsPerMinute: 100,
       })
 
-      // First request
-      const ctx1 = createMockContext()
-      const next1 = vi.fn().mockResolvedValue(undefined)
-      await middleware(ctx1, next1)
+      const request = createMockRequest()
+      const response = createMockResponse(200)
 
-      // Second request
-      const ctx2 = createMockContext()
-      const next2 = vi.fn().mockResolvedValue(undefined)
-      await middleware(ctx2, next2)
+      // Call onResponse — should record request
+      await middleware.onResponse!({
+        request,
+        response,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      // Both requests should have been counted (tested via delay behavior)
-      expect(next1).toHaveBeenCalled()
-      expect(next2).toHaveBeenCalled()
-    })
-
-    it('records requests even on error', async () => {
-      const middleware = createRateLimitMiddleware({
-        enableThrottle: true,
-        requestsPerMinute: 100,
-      })
-
-      const ctx = createMockContext()
-      const error = new Error('Request failed')
-      const next = vi.fn().mockRejectedValue(error)
-
-      await expect(middleware(ctx, next)).rejects.toThrow('Request failed')
-      // Request should still be recorded (tested via subsequent behavior)
+      // Second call should also work fine (request was recorded)
+      await middleware.onResponse!({
+        request,
+        response,
+        options: {},
+        schemaPath: '/test',
+      } as never)
     })
   })
 
   describe('with both features enabled', () => {
-    it('applies throttling and handles retry on rate limit error', async () => {
+    it('throttles and retries on 429', async () => {
       const middleware = createRateLimitMiddleware({
         enableRetry: true,
         enableThrottle: true,
@@ -437,15 +559,22 @@ describe('createRateLimitMiddleware', () => {
         baseDelay: 100,
       })
 
-      const ctx = createMockContext()
-      const error = new MantleRateLimitError('Rate limited', 1)
-      const next = vi.fn().mockRejectedValue(error)
+      const request = createMockRequest()
+      const response429 = createMockResponse(429)
+      const successResponse = createMockResponse(200, { ok: true })
+      mockFetch.mockResolvedValueOnce(successResponse)
 
-      const promise = middleware(ctx, next)
-      await vi.advanceTimersByTimeAsync(1000)
-      await promise
+      const promise = middleware.onResponse!({
+        request,
+        response: response429,
+        options: {},
+        schemaPath: '/test',
+      } as never)
 
-      expect(ctx.retry).toBe(true)
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
+
+      expect(result).toBe(successResponse)
     })
   })
 })

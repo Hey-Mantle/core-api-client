@@ -1,80 +1,37 @@
 import { BaseResource } from './base';
-import type {
-  AgentRun,
-  AgentRunCreateParams,
-  AgentRunCreateResponse,
-  AgentRunRetrieveResponse,
-} from '../types/ai-agents';
+import type { paths, components } from '../generated/api';
 
-/**
- * Resource for managing AI agent runs
- */
 export class AiAgentRunsResource extends BaseResource {
-  /**
-   * Create a new AI agent run
-   * Returns 202 Accepted as the run executes asynchronously
-   * Poll the retrieve endpoint to check for completion
-   */
-  async create(
-    agentId: string,
-    data?: AgentRunCreateParams
-  ): Promise<AgentRunCreateResponse> {
-    return this.post<AgentRunCreateResponse>(
-      `/ai/agents/${agentId}/runs`,
-      data || {}
-    );
+  async create(agentId: string, data?: paths['/ai/agents/{agentId}/runs']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/ai/agents/{agentId}/runs', { params: { path: { agentId } }, body: data as never }));
+  }
+
+  async get(agentId: string, runId: string) {
+    return this.unwrap(this.api.GET('/ai/agents/{agentId}/runs/{runId}', { params: { path: { agentId, runId } } }));
   }
 
   /**
-   * Retrieve the status and results of an AI agent run
-   * Use this to poll for completion after creating a run
-   */
-  async retrieve(
-    agentId: string,
-    runId: string
-  ): Promise<AgentRunRetrieveResponse> {
-    return this.get<AgentRunRetrieveResponse>(
-      `/ai/agents/${agentId}/runs/${runId}`
-    );
-  }
-
-  /**
-   * Create a run and poll until completion
-   * Convenience method that handles the async polling pattern
-   *
-   * @param agentId - The ID of the AI agent
-   * @param data - Optional parameters for the run
-   * @param options - Polling options
-   * @returns The completed agent run
+   * Create an agent run and poll until it completes or errors.
    */
   async createAndWait(
     agentId: string,
-    data?: AgentRunCreateParams,
-    options?: {
-      /** Maximum time to wait in milliseconds (default: 60000) */
-      timeout?: number;
-      /** Polling interval in milliseconds (default: 1000) */
-      pollInterval?: number;
-    }
-  ): Promise<AgentRun> {
-    const timeout = options?.timeout ?? 60000;
-    const pollInterval = options?.pollInterval ?? 1000;
-    const startTime = Date.now();
+    data?: paths['/ai/agents/{agentId}/runs']['post']['requestBody']['content']['application/json'],
+    options?: { timeout?: number; pollInterval?: number }
+  ): Promise<components['schemas']['AgentRun']> {
+    const { timeout = 300000, pollInterval = 2000 } = options || {};
+    const result = await this.create(agentId, data);
+    const run = (result as { run: components['schemas']['AgentRun'] }).run;
+    if (!run?.id) throw new Error('Agent run ID not returned');
 
-    const { run } = await this.create(agentId, data);
-
-    while (Date.now() - startTime < timeout) {
-      const { run: currentRun } = await this.retrieve(agentId, run.id);
-
-      if (currentRun.status === 'completed' || currentRun.status === 'error') {
-        return currentRun;
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const response = await this.get(agentId, run.id);
+      const agentRun = (response as { run: components['schemas']['AgentRun'] }).run;
+      if (agentRun.status === 'completed' || agentRun.status === 'error') {
+        return agentRun;
       }
-
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
-
-    throw new Error(
-      `Agent run ${run.id} did not complete within ${timeout}ms timeout`
-    );
+    throw new Error(`Agent run timed out after ${timeout}ms`);
   }
 }

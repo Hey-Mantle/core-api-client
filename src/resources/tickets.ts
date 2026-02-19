@@ -1,124 +1,56 @@
 import { BaseResource } from './base';
-import type {
-  Ticket,
-  TicketListParams,
-  TicketListResponse,
-  TicketCreateParams,
-  TicketUpdateParams,
-  TicketMessage,
-  TicketMessageCreateParams,
-  TicketMessageUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing tickets and ticket messages
- */
 export class TicketsResource extends BaseResource {
-  /**
-   * List tickets with optional filters and pagination
-   */
-  async list(params?: TicketListParams): Promise<TicketListResponse> {
-    const response = await this.get<TicketListResponse>('/tickets', params);
-    return {
-      tickets: response.tickets || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  // Tickets
+  async list(params?: paths['/tickets']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tickets', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single ticket by ID
-   */
-  async retrieve(ticketId: string): Promise<{ ticket: Ticket }> {
-    return this.get<{ ticket: Ticket }>(`/tickets/${ticketId}`);
+  async get(ticketId: string) {
+    return this.unwrap(this.api.GET('/tickets/{id}', { params: { path: { id: ticketId } } }));
   }
 
-  /**
-   * Create a new ticket
-   */
-  async create(data: TicketCreateParams): Promise<{ ticket: Ticket }> {
-    return this.post<{ ticket: Ticket }>('/tickets', data);
+  async create(data: paths['/tickets']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets', { body: data }));
   }
 
-  /**
-   * Update an existing ticket
-   */
-  async update(
-    ticketId: string,
-    data: TicketUpdateParams
-  ): Promise<{ ticket: Ticket }> {
-    return this.put<{ ticket: Ticket }>(`/tickets/${ticketId}`, data);
+  async update(ticketId: string, data: paths['/tickets/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tickets/{id}', { params: { path: { id: ticketId } }, body: data }));
   }
 
-  /**
-   * Delete a ticket
-   */
-  async del(ticketId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/tickets/${ticketId}`);
+  // Messages
+  async listMessages(ticketId: string, params?: paths['/tickets/{id}/messages']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tickets/{id}/messages', { params: { path: { id: ticketId }, query: params } }));
   }
 
-  // ========== Messages ==========
-
-  /**
-   * List messages for a ticket
-   */
-  async listMessages(ticketId: string): Promise<{ messages: TicketMessage[] }> {
-    return this.get<{ messages: TicketMessage[] }>(
-      `/tickets/${ticketId}/messages`
-    );
+  async getMessage(ticketId: string, messageId: string) {
+    return this.unwrap(this.api.GET('/tickets/{id}/messages/{messageId}', { params: { path: { id: ticketId, messageId } } }));
   }
 
-  /**
-   * Retrieve a single message
-   */
-  async retrieveMessage(
-    ticketId: string,
-    messageId: string
-  ): Promise<{ message: TicketMessage }> {
-    return this.get<{ message: TicketMessage }>(
-      `/tickets/${ticketId}/messages/${messageId}`
-    );
+  async createMessage(ticketId: string, data: paths['/tickets/{id}/messages']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets/{id}/messages', { params: { path: { id: ticketId } }, body: data }));
   }
 
-  /**
-   * Create a new message on a ticket
-   */
-  async createMessage(
-    ticketId: string,
-    data: TicketMessageCreateParams
-  ): Promise<{ message: TicketMessage }> {
-    return this.post<{ message: TicketMessage }>(
-      `/tickets/${ticketId}/messages`,
-      data
-    );
+  async updateMessage(ticketId: string, data: paths['/tickets/{id}/messages']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tickets/{id}/messages', { params: { path: { id: ticketId } }, body: data }));
   }
 
-  /**
-   * Update a message
-   */
-  async updateMessage(
-    ticketId: string,
-    messageId: string,
-    data: TicketMessageUpdateParams
-  ): Promise<{ message: TicketMessage }> {
-    return this.put<{ message: TicketMessage }>(
-      `/tickets/${ticketId}/messages/${messageId}`,
-      data
-    );
+  // Events
+  async listEvents(ticketId: string, params?: paths['/tickets/{id}/events']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tickets/{id}/events', { params: { path: { id: ticketId }, query: params } }));
   }
 
-  /**
-   * Delete a message
-   */
-  async deleteMessage(
-    ticketId: string,
-    messageId: string
-  ): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(
-      `/tickets/${ticketId}/messages/${messageId}`
-    );
+  async createEvent(ticketId: string, data: paths['/tickets/{id}/events']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets/{id}/events', { params: { path: { id: ticketId } }, body: data }));
+  }
+
+  // Loops
+  async listLoops(ticketId: string) {
+    return this.unwrap(this.api.GET('/tickets/{id}/loops', { params: { path: { id: ticketId } } }));
+  }
+
+  async getLoop(ticketId: string, loopId: string) {
+    return this.unwrap(this.api.GET('/tickets/{id}/loops/{loopId}', { params: { path: { id: ticketId, loopId } } }));
   }
 }

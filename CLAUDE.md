@@ -69,7 +69,7 @@ src/
 ```typescript
 // All resources follow this pattern:
 client.customers.list(params?)     // GET with pagination
-client.customers.retrieve(id)      // GET single
+client.customers.get(id)           // GET single
 client.customers.create(data)      // POST
 client.customers.update(id, data)  // PUT
 client.customers.del(id)           // DELETE (named 'del' to avoid reserved word)
@@ -136,7 +136,7 @@ client.use(createRateLimitMiddleware({
 - **Customers** - Full CRUD, custom fields, account owners, timeline, tags
 - **Contacts** - CRUD, tags, social profiles, upsert by email
 - **Companies** - CRUD for grouping customers
-- **Customer Segments** - List and retrieve only (read-only)
+- **Customer Segments** - List and get only (read-only)
 - **Deals** - CRUD, inline customer/contact creation, timeline (`timeline()`), events (`listEvents()`, `createEvent()`)
 - **Deal Flows** - CRUD for deal pipelines and stages
 - **Deal Activities** - CRUD for activities within deal flows
@@ -146,34 +146,34 @@ client.use(createRateLimitMiddleware({
 
 ### Meetings & AI
 - **Meetings** - CRUD, recording upload (getUploadUrl), transcription (startTranscription, getTranscriptionStatus), recording playback (getRecordingUrl), attendee management, AI enrichment (sentiment, engagement, deal insights, key points, decisions, topics), task suggestions (acceptTaskSuggestion, dismissTaskSuggestion)
-- **AI Agent Runs** - create, retrieve, createAndWait (convenience polling helper)
+- **AI Agent Runs** - create, get, createAndWait (convenience polling helper)
 
 ### Apps & Billing
 - **Apps** - Parent resource with nested: plans, features, reviews, usage metrics, app events, event names, property keys
-- **Subscriptions** - List and retrieve
-- **Transactions** - List and retrieve
+- **Subscriptions** - List and get
+- **Transactions** - List and get
 - **Charges** - List only
 - **Usage Events** - List and create (single or batch)
 - **Metrics** - mrr, arr, arpu, ltv, predictedLtv, revenueChurn, logoChurn, revenueRetention, netRevenueRetention, netRevenue, activeSubscriptions, activeInstalls, netInstalls, charges, payout, usageEvent, usageMetric, sales, fetch (custom)
 
 ### Support
-- **Tickets** - CRUD with nested messages resource (listMessages, retrieveMessage, createMessage, updateMessage, deleteMessage)
+- **Tickets** - CRUD with nested messages resource (listMessages, getMessage, createMessage, updateMessage, deleteMessage)
 - **Channels** - List and create (email/chat)
-- **Agents** - list, retrieve, create, findOrCreate
+- **Agents** - list, get, create, findOrCreate
 
 ### Affiliates
-- **Affiliates** - List, retrieve, update
+- **Affiliates** - List, get, update
 - **Affiliate Programs** - Full CRUD
-- **Affiliate Commissions** - List and retrieve only
-- **Affiliate Payouts** - List and retrieve only
-- **Affiliate Referrals** - List and retrieve
+- **Affiliate Commissions** - List and get only
+- **Affiliate Payouts** - List and get only
+- **Affiliate Referrals** - List and get
 
 ### Documentation
-- **Docs** - Collections (CRUD), groups (CRUD), pages (CRUD + publishPage, archivePage), repositories (list, retrieve), tree (getTree)
+- **Docs** - Collections (CRUD), groups (CRUD), pages (CRUD + publishPage, archivePage), repositories (list, get), tree (getTree)
 
 ### Automation & Extensions
 - **Flows** - CRUD for automation flows
-- **Flow Extensions** - Custom actions (listActions, retrieveAction, createAction, updateAction, deleteAction), action run updates (updateActionRun)
+- **Flow Extensions** - Custom actions (listActions, getAction, createAction, updateAction, deleteAction), action run updates (updateActionRun)
 
 ### Data & Search
 - **Entities** - Unified search across contacts and customers (`search()`)
@@ -181,13 +181,13 @@ client.use(createRateLimitMiddleware({
 - **Journal Entries** - CRUD for app journal/changelog entries
 
 ### Email
-- **Email Unsubscribe Groups** - list, retrieve, listMembers, addMembers, removeMembers, removeMember
+- **Email Unsubscribe Groups** - list, get, listMembers, addMembers, removeMembers, removeMember
 
 ### Platform
 - **Webhooks** - Full CRUD
-- **Users** - List and retrieve
-- **Me** - Retrieve current user and organization
-- **Organization** - Retrieve organization details
+- **Users** - List and get
+- **Me** - Get current user and organization
+- **Organization** - Get organization details
 
 ## Types to Know
 

@@ -1,89 +1,32 @@
 import { BaseResource } from './base';
-import type {
-  Contact,
-  ContactListParams,
-  ContactListResponse,
-  ContactCreateParams,
-  ContactCreateResponse,
-  ContactUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing contacts
- */
 export class ContactsResource extends BaseResource {
-  /**
-   * List contacts with optional filters and pagination
-   */
-  async list(params?: ContactListParams): Promise<ContactListResponse> {
-    const response = await this.get<ContactListResponse>('/contacts', params);
-    return {
-      contacts: response.contacts || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/contacts']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/contacts', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single contact by ID
-   */
-  async retrieve(contactId: string): Promise<{ contact: Contact }> {
-    return this.get<{ contact: Contact }>(`/contacts/${contactId}`);
+  async get(contactId: string) {
+    return this.unwrap(this.api.GET('/contacts/{id}', { params: { path: { id: contactId } } }));
   }
 
-  /**
-   * Create or update a contact.
-   * If a contact with the same email exists in the organization, it will be updated.
-   * Otherwise, a new contact will be created.
-   * @returns The contact and a boolean indicating if it was newly created
-   */
-  async create(data: ContactCreateParams): Promise<ContactCreateResponse> {
-    return this.post<ContactCreateResponse>('/contacts', data);
+  async create(data: paths['/contacts']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/contacts', { body: data }));
   }
 
-  /**
-   * Update an existing contact
-   */
-  async update(
-    contactId: string,
-    data: ContactUpdateParams
-  ): Promise<{ contact: Contact }> {
-    return this.put<{ contact: Contact }>(`/contacts/${contactId}`, data);
+  async update(contactId: string, data: paths['/contacts/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/contacts/{id}', { params: { path: { id: contactId } }, body: data }));
   }
 
-  /**
-   * Delete a contact
-   */
-  async del(contactId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/contacts/${contactId}`);
+  async del(contactId: string) {
+    return this.unwrap(this.api.DELETE('/contacts/{id}', { params: { path: { id: contactId } } }));
   }
 
-  /**
-   * Add tags to a contact
-   */
-  async addTags(
-    contactId: string,
-    tags: string[]
-  ): Promise<{ contact: Contact }> {
-    return this.post<{ contact: Contact }>(
-      `/contacts/${contactId}/addTags`,
-      { tags }
-    );
+  async addTags(contactId: string, tags: string[]) {
+    return this.unwrap(this.api.POST('/contacts/{id}/addTags', { params: { path: { id: contactId } }, body: { tags } as never }));
   }
 
-  /**
-   * Remove tags from a contact
-   */
-  async removeTags(
-    contactId: string,
-    tags: string[]
-  ): Promise<{ contact: Contact }> {
-    return this.post<{ contact: Contact }>(
-      `/contacts/${contactId}/removeTags`,
-      { tags }
-    );
+  async removeTags(contactId: string, tags: string[]) {
+    return this.unwrap(this.api.POST('/contacts/{id}/removeTags', { params: { path: { id: contactId } }, body: { tags } as never }));
   }
 }

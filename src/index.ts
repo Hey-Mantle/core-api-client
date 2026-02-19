@@ -20,15 +20,10 @@ export {
   type AuthRefreshOptions,
   createRateLimitMiddleware,
   type RateLimitOptions,
-  type Middleware,
-  type MiddlewareContext,
-  type MiddlewareRequest,
-  type MiddlewareResponse,
-  type MiddlewareOptions,
-  type NextFunction,
-  type HttpMethod,
-  MiddlewareManager,
 } from './middleware';
+
+// Re-export openapi-fetch Middleware type for consumers
+export type { Middleware } from 'openapi-fetch';
 
 // Resource class exports (for advanced usage)
 export {
@@ -63,5 +58,12 @@ export {
   DocsResource,
   EntitiesResource,
   CustomDataResource,
+  TimelineCommentsResource,
+  ListsResource,
+  JournalEntriesResource,
+  EmailUnsubscribeGroupsResource,
+  FlowExtensionsResource,
+  AiAgentRunsResource,
+  MeetingsResource,
   SyncedEmailsResource,
 } from './resources';

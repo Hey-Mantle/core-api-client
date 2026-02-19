@@ -1,21 +1,21 @@
 import { BaseResource } from './base';
-import type { Channel, ChannelListParams, ChannelCreateParams } from '../types';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing CX channels
  */
 export class ChannelsResource extends BaseResource {
   /**
-   * List CX channels
+   * List CX channels with optional filters
    */
-  async list(params?: ChannelListParams): Promise<{ channels: Channel[] }> {
-    return this.get<{ channels: Channel[] }>('/channels', params);
+  async list(params?: paths['/channels']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/channels', { params: { query: params } }));
   }
 
   /**
    * Create a new CX channel
    */
-  async create(data: ChannelCreateParams): Promise<{ channel: Channel }> {
-    return this.post<{ channel: Channel }>('/channels', data);
+  async create(data: paths['/channels']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/channels', { body: data }));
   }
 }

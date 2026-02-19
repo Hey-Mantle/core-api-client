@@ -1,104 +1,24 @@
 import { BaseResource } from './base';
-import type {
-  EmailUnsubscribeGroup,
-  EmailUnsubscribeGroupListParams,
-  EmailUnsubscribeGroupListResponse,
-  EmailUnsubscribeGroupMemberListParams,
-  EmailUnsubscribeGroupMemberListResponse,
-  EmailUnsubscribeGroupAddMembersParams,
-  EmailUnsubscribeGroupAddMembersResponse,
-  EmailUnsubscribeGroupRemoveMembersParams,
-  EmailUnsubscribeGroupRemoveMembersResponse,
-} from '../types/email';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing email unsubscribe groups and their members
- */
 export class EmailUnsubscribeGroupsResource extends BaseResource {
-  /**
-   * List all email unsubscribe groups
-   */
-  async list(
-    params?: EmailUnsubscribeGroupListParams
-  ): Promise<EmailUnsubscribeGroupListResponse> {
-    const response = await this.get<EmailUnsubscribeGroupListResponse>(
-      '/email/unsubscribe_groups',
-      params
-    );
-    return {
-      unsubscribeGroups: response.unsubscribeGroups || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/email/unsubscribe_groups']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/email/unsubscribe_groups', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single unsubscribe group
-   */
-  async retrieve(
-    groupId: string
-  ): Promise<{ unsubscribeGroup: EmailUnsubscribeGroup }> {
-    return this.get<{ unsubscribeGroup: EmailUnsubscribeGroup }>(
-      `/email/unsubscribe_groups/${groupId}`
-    );
+  async listMembers(groupId: string, params?: paths['/email/unsubscribe_groups/{id}/members']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/email/unsubscribe_groups/{id}/members', { params: { path: { id: groupId }, query: params } }));
   }
 
-  // ========== Members ==========
-
-  /**
-   * List members of an unsubscribe group
-   */
-  async listMembers(
-    groupId: string,
-    params?: EmailUnsubscribeGroupMemberListParams
-  ): Promise<EmailUnsubscribeGroupMemberListResponse> {
-    const response = await this.get<EmailUnsubscribeGroupMemberListResponse>(
-      `/email/unsubscribe_groups/${groupId}/members`,
-      params
-    );
-    return {
-      members: response.members || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async addMembers(groupId: string, data: paths['/email/unsubscribe_groups/{id}/members']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/email/unsubscribe_groups/{id}/members', { params: { path: { id: groupId } }, body: data }));
   }
 
-  /**
-   * Add members to an unsubscribe group by email addresses
-   */
-  async addMembers(
-    groupId: string,
-    data: EmailUnsubscribeGroupAddMembersParams
-  ): Promise<EmailUnsubscribeGroupAddMembersResponse> {
-    return this.post<EmailUnsubscribeGroupAddMembersResponse>(
-      `/email/unsubscribe_groups/${groupId}/members`,
-      data
-    );
+  async removeMembers(groupId: string, data: paths['/email/unsubscribe_groups/{id}/members']['delete']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.DELETE('/email/unsubscribe_groups/{id}/members', { params: { path: { id: groupId } }, body: data }));
   }
 
-  /**
-   * Remove members from an unsubscribe group by email addresses
-   */
-  async removeMembers(
-    groupId: string,
-    data: EmailUnsubscribeGroupRemoveMembersParams
-  ): Promise<EmailUnsubscribeGroupRemoveMembersResponse> {
-    return this._delete<EmailUnsubscribeGroupRemoveMembersResponse>(
-      `/email/unsubscribe_groups/${groupId}/members?emails=${encodeURIComponent(data.emails.join(','))}`
-    );
-  }
-
-  /**
-   * Remove a single member from an unsubscribe group by member ID
-   */
-  async removeMember(groupId: string, memberId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(
-      `/email/unsubscribe_groups/${groupId}/members/${memberId}`
-    );
+  async removeMember(groupId: string, memberId: string) {
+    return this.unwrap(this.api.DELETE('/email/unsubscribe_groups/{id}/members/{member_id}', { params: { path: { id: groupId, member_id: memberId } } }));
   }
 }

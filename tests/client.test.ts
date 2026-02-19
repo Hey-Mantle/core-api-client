@@ -16,16 +16,17 @@ const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 function createMockResponse(
-  data: unknown,
+  body: unknown,
   options: { status?: number; headers?: Record<string, string> } = {}
 ) {
   const { status = 200, headers = {} } = options
-  return {
-    ok: status >= 200 && status < 300,
+  return new Response(JSON.stringify(body), {
     status,
-    headers: new Headers(headers),
-    text: vi.fn().mockResolvedValue(JSON.stringify(data)),
-  }
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      ...headers,
+    }),
+  })
 }
 
 /**
@@ -124,250 +125,119 @@ describe('MantleCoreClient', () => {
       }
     })
 
-    it('uses default baseURL when not provided', async () => {
-      const client = new MantleCoreClient({ apiKey: 'test-key' })
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-      await client.get('/test')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.heymantle.com/v1/test',
-        expect.any(Object)
-      )
-    })
-
-    it('uses custom baseURL when provided', async () => {
-      const client = new MantleCoreClient({
-        apiKey: 'test-key',
-        baseURL: 'https://custom.api.com/v2',
-      })
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-      await client.get('/test')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://custom.api.com/v2/test',
-        expect.any(Object)
-      )
-    })
-
     it('registers middleware from config', async () => {
-      const middleware = vi.fn(async (_ctx, next) => {
-        await next()
-      })
+      let onRequestCalled = false
 
       const client = new MantleCoreClient({
         apiKey: 'test-key',
-        middleware: [middleware],
-      })
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-      await client.get('/test')
-
-      expect(middleware).toHaveBeenCalled()
-    })
-
-    it('registers middleware with options from config', async () => {
-      const middleware = vi.fn(async (_ctx, next) => {
-        await next()
+        middleware: [
+          {
+            onRequest({ request }) {
+              onRequestCalled = true
+              return request
+            },
+          },
+        ],
       })
 
-      const client = new MantleCoreClient({
-        apiKey: 'test-key',
-        middleware: [[middleware, { name: 'test-middleware', priority: 50 }]],
-      })
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      await client.get('/test')
-
-      expect(middleware).toHaveBeenCalled()
-    })
-  })
-
-  describe('HTTP methods', () => {
-    let client: MantleCoreClient
-
-    beforeEach(() => {
-      client = new MantleCoreClient({ apiKey: 'test-key' })
-    })
-
-    describe('get', () => {
-      it('makes GET request with correct headers', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-        await client.get('/endpoint')
-
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.heymantle.com/v1/endpoint',
-          expect.objectContaining({
-            method: 'GET',
-            headers: expect.objectContaining({
-              Authorization: 'Bearer test-key',
-              'Content-Type': 'application/json',
-            }),
-          })
-        )
-      })
-
-      it('appends query string from params', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-        await client.get('/endpoint', { page: 1, limit: 10 })
-
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('page=1'),
-          expect.any(Object)
-        )
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('limit=10'),
-          expect.any(Object)
-        )
-      })
-
-      it('filters undefined params', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-
-        await client.get('/endpoint', { page: 1, filter: undefined })
-
-        const calledUrl = mockFetch.mock.calls[0][0]
-        expect(calledUrl).toContain('page=1')
-        expect(calledUrl).not.toContain('filter')
-      })
-
-      it('returns parsed JSON response', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ result: 'success' }))
-
-        const response = await client.get<{ result: string }>('/endpoint')
-
-        expect(response).toEqual({ result: 'success' })
-      })
-    })
-
-    describe('post', () => {
-      it('makes POST request with JSON body', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ id: '123' }))
-
-        await client.post('/endpoint', { name: 'Test' })
-
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.heymantle.com/v1/endpoint',
-          expect.objectContaining({
-            method: 'POST',
-            body: JSON.stringify({ name: 'Test' }),
-          })
-        )
-      })
-
-      it('filters undefined values from body', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ id: '123' }))
-
-        await client.post('/endpoint', { name: 'Test', email: undefined })
-
-        const calledBody = mockFetch.mock.calls[0][1].body
-        expect(JSON.parse(calledBody)).toEqual({ name: 'Test' })
-      })
-    })
-
-    describe('put', () => {
-      it('makes PUT request with JSON body', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ updated: true }))
-
-        await client.put('/endpoint', { name: 'Updated' })
-
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.heymantle.com/v1/endpoint',
-          expect.objectContaining({
-            method: 'PUT',
-            body: JSON.stringify({ name: 'Updated' }),
-          })
-        )
-      })
-    })
-
-    describe('delete', () => {
-      it('makes DELETE request', async () => {
-        mockFetch.mockResolvedValueOnce(createMockResponse({ deleted: true }))
-
-        await client.delete('/endpoint/123')
-
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.heymantle.com/v1/endpoint/123',
-          expect.objectContaining({
-            method: 'DELETE',
-          })
-        )
-      })
+      expect(onRequestCalled).toBe(true)
     })
   })
 
   describe('authentication', () => {
-    it('uses accessToken when both apiKey and accessToken are provided', async () => {
+    it('sends Authorization header with apiKey', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-api-key' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Authorization')).toBe('Bearer test-api-key')
+    })
+
+    it('sends Authorization header with accessToken', async () => {
+      const client = new MantleCoreClient({ accessToken: 'test-access-token' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Authorization')).toBe(
+        'Bearer test-access-token'
+      )
+    })
+
+    it('prefers accessToken over apiKey', async () => {
       const client = new MantleCoreClient({
         apiKey: 'api-key',
         accessToken: 'access-token',
       })
-      mockFetch.mockResolvedValueOnce(createMockResponse({}))
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
 
-      await client.get('/test')
+      await client.customers.list()
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer access-token',
-          }),
-        })
-      )
-    })
-
-    it('uses apiKey when accessToken is not provided', async () => {
-      const client = new MantleCoreClient({ apiKey: 'api-key' })
-      mockFetch.mockResolvedValueOnce(createMockResponse({}))
-
-      await client.get('/test')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer api-key',
-          }),
-        })
-      )
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Authorization')).toBe('Bearer access-token')
     })
 
     it('updateAuth updates accessToken', async () => {
-      const client = new MantleCoreClient({ apiKey: 'api-key' })
+      const client = new MantleCoreClient({ apiKey: 'old-key' })
       client.updateAuth({ accessToken: 'new-token' })
 
-      mockFetch.mockResolvedValueOnce(createMockResponse({}))
-      await client.get('/test')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer new-token',
-          }),
-        })
-      )
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Authorization')).toBe('Bearer new-token')
     })
 
     it('updateAuth updates apiKey', async () => {
       const client = new MantleCoreClient({ apiKey: 'old-key' })
       client.updateAuth({ apiKey: 'new-key' })
 
-      mockFetch.mockResolvedValueOnce(createMockResponse({}))
-      await client.get('/test')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer new-key',
-          }),
-        })
-      )
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Authorization')).toBe('Bearer new-key')
+    })
+  })
+
+  describe('requests', () => {
+    it('uses default baseURL', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-key' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.url).toContain('https://api.heymantle.com/v1')
+    })
+
+    it('uses custom baseURL', async () => {
+      const client = new MantleCoreClient({
+        apiKey: 'test-key',
+        baseURL: 'https://custom.api.com/v2',
+      })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.url).toContain('https://custom.api.com/v2')
+    })
+
+    it('sends Content-Type header', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-key' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('Content-Type')).toBe('application/json')
     })
   })
 
@@ -379,37 +249,32 @@ describe('MantleCoreClient', () => {
     })
 
     it('throws MantleAuthenticationError on 401', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(JSON.stringify({ error: 'Unauthorized' })),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ error: 'Unauthorized' }, { status: 401 })
+      )
 
-      await expect(client.get('/test')).rejects.toThrow(MantleAuthenticationError)
+      await expect(client.customers.list()).rejects.toThrow(
+        MantleAuthenticationError
+      )
     })
 
     it('throws MantlePermissionError on 403', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(JSON.stringify({ error: 'Forbidden' })),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ error: 'Forbidden' }, { status: 403 })
+      )
 
-      await expect(client.get('/test')).rejects.toThrow(MantlePermissionError)
+      await expect(client.customers.list()).rejects.toThrow(
+        MantlePermissionError
+      )
     })
 
     it('throws MantleAPIError on 404 with status code', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(JSON.stringify({ error: 'Not found' })),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ error: 'Not found' }, { status: 404 })
+      )
 
       try {
-        await client.get('/test')
+        await client.customers.list()
       } catch (error) {
         expect(error).toBeInstanceOf(MantleAPIError)
         expect((error as MantleAPIError).statusCode).toBe(404)
@@ -417,35 +282,33 @@ describe('MantleCoreClient', () => {
     })
 
     it('throws MantleValidationError on 422', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 422,
-        headers: new Headers(),
-        text: vi
-          .fn()
-          .mockResolvedValue(
-            JSON.stringify({ error: 'Validation failed', details: 'email is required' })
-          ),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse(
+          { error: 'Validation failed', details: 'email is required' },
+          { status: 422 }
+        )
+      )
 
       try {
-        await client.post('/test', {})
+        await client.customers.create({ name: 'Test' } as never)
       } catch (error) {
         expect(error).toBeInstanceOf(MantleValidationError)
-        expect((error as MantleValidationError).details).toBe('email is required')
+        expect((error as MantleValidationError).details).toBe(
+          'email is required'
+        )
       }
     })
 
     it('throws MantleRateLimitError on 429 with retryAfter', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '30' }),
-        text: vi.fn().mockResolvedValue(JSON.stringify({ error: 'Rate limited' })),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse(
+          { error: 'Rate limited' },
+          { status: 429, headers: { 'Retry-After': '30' } }
+        )
+      )
 
       try {
-        await client.get('/test')
+        await client.customers.list()
       } catch (error) {
         expect(error).toBeInstanceOf(MantleRateLimitError)
         expect((error as MantleRateLimitError).retryAfter).toBe(30)
@@ -453,77 +316,15 @@ describe('MantleCoreClient', () => {
     })
 
     it('throws MantleAPIError on 500', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(JSON.stringify({ error: 'Internal error' })),
-      })
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ error: 'Internal error' }, { status: 500 })
+      )
 
       try {
-        await client.get('/test')
+        await client.customers.list()
       } catch (error) {
         expect(error).toBeInstanceOf(MantleAPIError)
         expect((error as MantleAPIError).statusCode).toBe(500)
-      }
-    })
-
-    it('throws MantleAPIError with timeout on request timeout', async () => {
-      vi.useFakeTimers()
-      const client = new MantleCoreClient({ apiKey: 'test-key', timeout: 1000 })
-
-      mockFetch.mockImplementation(
-        () =>
-          new Promise((_, reject) => {
-            setTimeout(() => {
-              const error = new Error('Aborted')
-              error.name = 'AbortError'
-              reject(error)
-            }, 2000)
-          })
-      )
-
-      const promise = client.get('/test')
-      vi.advanceTimersByTime(2000)
-
-      try {
-        await promise
-      } catch (error) {
-        expect(error).toBeInstanceOf(MantleAPIError)
-        expect((error as MantleAPIError).statusCode).toBe(408)
-        expect((error as MantleAPIError).message).toBe('Request timeout')
-      }
-    })
-
-    it('handles empty error response body', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(''),
-      })
-
-      try {
-        await client.get('/test')
-      } catch (error) {
-        expect(error).toBeInstanceOf(MantleAPIError)
-        expect((error as MantleAPIError).message).toBe('API request failed: 500')
-      }
-    })
-
-    it('handles invalid JSON in error response', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue('not json'),
-      })
-
-      try {
-        await client.get('/test')
-      } catch (error) {
-        expect(error).toBeInstanceOf(MantleAPIError)
-        expect((error as MantleAPIError).message).toBe('API request failed: 500')
       }
     })
   })
@@ -531,96 +332,86 @@ describe('MantleCoreClient', () => {
   describe('middleware', () => {
     it('use() returns this for chaining', () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })
-      const result = client.use(async (_ctx, next) => {
-        await next()
+      const result = client.use({
+        onRequest({ request }) {
+          return request
+        },
       })
 
       expect(result).toBe(client)
     })
 
-    it('middleware receives correct context', async () => {
+    it('middleware onRequest receives the request', async () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })
-      let capturedCtx: unknown
+      let capturedRequest: Request | undefined
 
-      client.use(async (ctx, next) => {
-        capturedCtx = ctx
-        await next()
+      client.use({
+        onRequest({ request }) {
+          capturedRequest = request
+          return request
+        },
       })
 
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-      await client.get('/endpoint')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(capturedCtx).toMatchObject({
-        request: expect.objectContaining({
-          url: 'https://api.heymantle.com/v1/endpoint',
-          method: 'GET',
-          endpoint: '/endpoint',
-        }),
-        retry: false,
-        retryCount: 0,
-        maxRetries: 3,
-      })
+      expect(capturedRequest).toBeDefined()
+      expect(capturedRequest!.url).toContain('/customers')
+      expect(capturedRequest!.method).toBe('GET')
     })
 
     it('middleware can modify request headers', async () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })
 
-      client.use(async (ctx, next) => {
-        ctx.request.headers['X-Custom-Header'] = 'custom-value'
-        await next()
+      client.use({
+        onRequest({ request }) {
+          request.headers.set('X-Custom-Header', 'custom-value')
+          return request
+        },
       })
 
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-      await client.get('/endpoint')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'X-Custom-Header': 'custom-value',
-          }),
-        })
-      )
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.headers.get('X-Custom-Header')).toBe('custom-value')
     })
 
-    it('removeMiddleware removes by name', async () => {
+    it('middleware onResponse receives the response', async () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })
-      const middleware = vi.fn(async (_ctx, next) => {
-        await next()
+      let capturedStatus: number | undefined
+
+      client.use({
+        onResponse({ response }) {
+          capturedStatus = response.status
+          return undefined
+        },
       })
 
-      client.use(middleware, { name: 'test-mw' })
-      const removed = client.removeMiddleware('test-mw')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(removed).toBe(true)
-
-      mockFetch.mockResolvedValueOnce(createMockResponse({ data: 'test' }))
-      await client.get('/endpoint')
-
-      expect(middleware).not.toHaveBeenCalled()
+      expect(capturedStatus).toBe(200)
     })
 
-    it('removeMiddleware returns false for non-existent middleware', () => {
+    it('eject() removes middleware', async () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })
-      const removed = client.removeMiddleware('non-existent')
+      let callCount = 0
 
-      expect(removed).toBe(false)
-    })
-  })
+      const mw = {
+        onRequest({ request }: { request: Request }) {
+          callCount++
+          return request
+        },
+      }
 
-  describe('empty responses', () => {
-    it('handles empty response body', async () => {
-      const client = new MantleCoreClient({ apiKey: 'test-key' })
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 204,
-        headers: new Headers(),
-        text: vi.fn().mockResolvedValue(''),
-      })
+      client.use(mw)
+      client.eject(mw)
 
-      const response = await client.delete('/endpoint/123')
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      await client.customers.list()
 
-      expect(response).toEqual({})
+      expect(callCount).toBe(0)
     })
   })
 })

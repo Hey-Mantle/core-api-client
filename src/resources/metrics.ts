@@ -1,266 +1,64 @@
 import { BaseResource } from './base';
-import type {
-  MetricsGetParams,
-  MetricsResponse,
-  MetricsBaseParams,
-  UsageEventMetricsParams,
-  UsageMetricParams,
-  DateRangeType,
-  SalesMetricsParams,
-  SalesMetricsResponse,
-} from '../types';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for retrieving metrics and analytics
- */
 export class MetricsResource extends BaseResource {
-  /**
-   * Fetch metrics with custom parameters
-   */
-  async fetch(params: MetricsGetParams): Promise<MetricsResponse> {
-    const response = await this.client.get<unknown[]>('/metrics', {
-      ...params,
-      includes: params.includes || ['includeTotal'],
-      appEventsForMrr: params.appEventsForMrr ?? true,
-    });
-
-    // Normalize response
-    const data = Array.isArray(response) ? response : [];
-    const first = data[0] as MetricsResponse | undefined;
-
-    return {
-      data: data as MetricsResponse['data'],
-      total: first?.total,
-      startingTotal: first?.startingTotal,
-      change: first?.change,
-      changePercentage: first?.changePercentage,
-      formattedTotal: first?.formattedTotal,
-      formattedChange: first?.formattedChange,
-      formattedChangePercentage: first?.formattedChangePercentage,
-    };
+  async mrr(params?: paths['/api/core/v1/metrics/mrr']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/mrr', { params: { query: params } }));
   }
 
-  /**
-   * Get Annual Recurring Revenue (ARR)
-   */
-  async arr(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.arr',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async arr(params?: paths['/api/core/v1/metrics/arr']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/arr', { params: { query: params } }));
   }
 
-  /**
-   * Get Monthly Recurring Revenue (MRR)
-   */
-  async mrr(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.mrr',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async arpu(params?: paths['/api/core/v1/metrics/arpu']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/arpu', { params: { query: params } }));
   }
 
-  /**
-   * Get active subscriptions count
-   */
-  async activeSubscriptions(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.activeSubscriptions',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async activeSubscriptions(params?: paths['/api/core/v1/metrics/activeSubscriptions']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/activeSubscriptions', { params: { query: params } }));
   }
 
-  /**
-   * Get active installations count
-   */
-  async activeInstalls(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.activeInstalls',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async activeInstalls(params?: paths['/api/core/v1/metrics/activeInstalls']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/activeInstalls', { params: { query: params } }));
   }
 
-  /**
-   * Get net new installations
-   */
-  async netInstalls(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.netInstalls',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async netInstalls(params?: paths['/api/core/v1/metrics/netInstalls']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/netInstalls', { params: { query: params } }));
   }
 
-  /**
-   * Get Average Revenue Per User (ARPU)
-   */
-  async arpu(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.arpu',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async logoChurn(params?: paths['/api/core/v1/metrics/logoChurn']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/logoChurn', { params: { query: params } }));
   }
 
-  /**
-   * Get Lifetime Value (LTV)
-   */
-  async ltv(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.ltv',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async revenueChurn(params?: paths['/api/core/v1/metrics/revenueChurn']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/revenueChurn', { params: { query: params } }));
   }
 
-  /**
-   * Get revenue churn rate
-   */
-  async revenueChurn(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.revenueChurn',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async revenueRetention(params?: paths['/api/core/v1/metrics/revenueRetention']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/revenueRetention', { params: { query: params } }));
   }
 
-  /**
-   * Get logo (customer) churn rate
-   */
-  async logoChurn(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.logoChurn',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async netRevenueRetention(params?: paths['/api/core/v1/metrics/netRevenueRetention']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/netRevenueRetention', { params: { query: params } }));
   }
 
-  /**
-   * Get revenue retention rate
-   */
-  async revenueRetention(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.revenueRetention',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async netRevenue(params?: paths['/api/core/v1/metrics/netRevenue']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/netRevenue', { params: { query: params } }));
   }
 
-  /**
-   * Get net revenue retention rate
-   */
-  async netRevenueRetention(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.netRevenueRetention',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async payout(params?: paths['/api/core/v1/metrics/payout']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/payout', { params: { query: params } }));
   }
 
-  /**
-   * Get net revenue
-   */
-  async netRevenue(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.netRevenue',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async predictedLtv(params?: paths['/api/core/v1/metrics/predictedLtv']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/predictedLtv', { params: { query: params } }));
   }
 
-  /**
-   * Get payout amount
-   */
-  async payout(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.payout',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
+  async usageEvent(params: paths['/api/core/v1/metrics/usageEvent']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/usageEvent', { params: { query: params } }));
   }
 
-  /**
-   * Get predicted Lifetime Value
-   */
-  async predictedLtv(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.predictedLtv',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
-  }
-
-  /**
-   * Get charges
-   */
-  async charges(
-    params: MetricsBaseParams & { dateRange?: DateRangeType }
-  ): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.charges',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
-  }
-
-  /**
-   * Get usage event metrics
-   */
-  async usageEvent(params: UsageEventMetricsParams): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.usageEvent',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
-  }
-
-  /**
-   * Get usage metric data
-   */
-  async usageMetric(params: UsageMetricParams): Promise<MetricsResponse> {
-    return this.fetch({
-      metric: 'PlatformApp.usageMetric',
-      dateRange: params.dateRange || 'last_30_days',
-      ...params,
-    });
-  }
-
-  /**
-   * Get key sales metrics
-   */
-  async sales(params?: SalesMetricsParams): Promise<SalesMetricsResponse> {
-    return this.get<SalesMetricsResponse>('/metrics/sales', params);
+  async usageMetric(params: paths['/api/core/v1/metrics/usageMetric']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/usageMetric', { params: { query: params } }));
   }
 }

@@ -1,114 +1,46 @@
 import { BaseResource } from './base';
-import type {
-  Task,
-  TaskListParams,
-  TaskListResponse,
-  TaskCreateParams,
-  TaskUpdateParams,
-  TaskUpdateResponse,
-  TodoItem,
-  TodoItemListResponse,
-  TodoItemCreateParams,
-  TodoItemUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing tasks
- */
 export class TasksResource extends BaseResource {
-  /**
-   * List tasks with optional filters and pagination
-   */
-  async list(params?: TaskListParams): Promise<TaskListResponse> {
-    const response = await this.get<TaskListResponse>('/tasks', params);
-    return {
-      tasks: response.tasks || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  // Tasks
+  async list(params?: paths['/tasks']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tasks', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single task by ID
-   */
-  async retrieve(taskId: string): Promise<{ task: Task }> {
-    return this.get<{ task: Task }>(`/tasks/${taskId}`);
+  async get(taskId: string) {
+    return this.unwrap(this.api.GET('/tasks/{id}', { params: { path: { id: taskId } } }));
   }
 
-  /**
-   * Create a new task
-   */
-  async create(data: TaskCreateParams): Promise<Task> {
-    return this.post<Task>('/tasks', data);
+  async create(data: paths['/tasks']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tasks', { body: data }));
   }
 
-  /**
-   * Update an existing task
-   */
-  async update(
-    taskId: string,
-    data: TaskUpdateParams
-  ): Promise<TaskUpdateResponse> {
-    return this.put<TaskUpdateResponse>(`/tasks/${taskId}`, data);
+  async update(taskId: string, data: paths['/tasks/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tasks/{id}', { params: { path: { id: taskId } }, body: data }));
   }
 
-  /**
-   * Delete a task
-   */
-  async del(taskId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/tasks/${taskId}`);
+  async del(taskId: string) {
+    return this.unwrap(this.api.DELETE('/tasks/{id}', { params: { path: { id: taskId } } }));
   }
 
-  // ========== Todo Items ==========
-
-  /**
-   * List todo items for a task
-   */
-  async listTodoItems(taskId: string): Promise<TodoItemListResponse> {
-    return this.get<TodoItemListResponse>(`/tasks/${taskId}/todo-items`);
+  // Todo Items
+  async listTodoItems(taskId: string) {
+    return this.unwrap(this.api.GET('/tasks/{id}/todo-items', { params: { path: { id: taskId } } }));
   }
 
-  /**
-   * Retrieve a single todo item
-   */
-  async retrieveTodoItem(
-    taskId: string,
-    itemId: string
-  ): Promise<{ item: TodoItem }> {
-    return this.get<{ item: TodoItem }>(`/tasks/${taskId}/todo-items/${itemId}`);
+  async getTodoItem(taskId: string, itemId: string) {
+    return this.unwrap(this.api.GET('/tasks/{id}/todo-items/{itemId}', { params: { path: { id: taskId, itemId } } }));
   }
 
-  /**
-   * Create a todo item for a task
-   */
-  async createTodoItem(
-    taskId: string,
-    data: TodoItemCreateParams
-  ): Promise<{ item: TodoItem }> {
-    return this.post<{ item: TodoItem }>(`/tasks/${taskId}/todo-items`, data);
+  async createTodoItem(taskId: string, data: paths['/tasks/{id}/todo-items']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tasks/{id}/todo-items', { params: { path: { id: taskId } }, body: data }));
   }
 
-  /**
-   * Update a todo item
-   */
-  async updateTodoItem(
-    taskId: string,
-    itemId: string,
-    data: TodoItemUpdateParams
-  ): Promise<{ item: TodoItem }> {
-    return this.put<{ item: TodoItem }>(
-      `/tasks/${taskId}/todo-items/${itemId}`,
-      data
-    );
+  async updateTodoItem(taskId: string, itemId: string, data: paths['/tasks/{id}/todo-items/{itemId}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tasks/{id}/todo-items/{itemId}', { params: { path: { id: taskId, itemId } }, body: data }));
   }
 
-  /**
-   * Delete a todo item
-   */
-  async deleteTodoItem(taskId: string, itemId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/tasks/${taskId}/todo-items/${itemId}`);
+  async deleteTodoItem(taskId: string, itemId: string) {
+    return this.unwrap(this.api.DELETE('/tasks/{id}/todo-items/{itemId}', { params: { path: { id: taskId, itemId } } }));
   }
 }

@@ -1,11 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  Webhook,
-  WebhookListResponse,
-  WebhookCreateParams,
-  WebhookUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing webhooks
@@ -14,43 +8,28 @@ export class WebhooksResource extends BaseResource {
   /**
    * List all webhooks
    */
-  async list(): Promise<WebhookListResponse> {
-    const response = await this.get<WebhookListResponse>('/webhooks');
-    return {
-      webhooks: response.webhooks || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-    };
-  }
-
-  /**
-   * Retrieve a single webhook by ID
-   */
-  async retrieve(webhookId: string): Promise<{ webhook: Webhook }> {
-    return this.get<{ webhook: Webhook }>(`/webhooks/${webhookId}`);
+  async list() {
+    return this.unwrap(this.api.GET('/webhooks'));
   }
 
   /**
    * Create a new webhook
    */
-  async create(data: WebhookCreateParams): Promise<{ webhook: Webhook }> {
-    return this.post<{ webhook: Webhook }>('/webhooks', data);
+  async create(data: paths['/webhooks']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/webhooks', { body: data }));
   }
 
   /**
    * Update an existing webhook
    */
-  async update(
-    webhookId: string,
-    data: WebhookUpdateParams
-  ): Promise<{ webhook: Webhook }> {
-    return this.put<{ webhook: Webhook }>(`/webhooks/${webhookId}`, data);
+  async update(webhookId: string, data: paths['/webhooks/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/webhooks/{id}', { params: { path: { id: webhookId } }, body: data }));
   }
 
   /**
    * Delete a webhook
    */
-  async del(webhookId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/webhooks/${webhookId}`);
+  async del(webhookId: string) {
+    return this.unwrap(this.api.DELETE('/webhooks/{id}', { params: { path: { id: webhookId } } }));
   }
 }

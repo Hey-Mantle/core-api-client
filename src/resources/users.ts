@@ -1,5 +1,5 @@
 import { BaseResource } from './base';
-import type { User, UserListParams, UserListResponse } from '../types';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing organization users
@@ -8,20 +8,14 @@ export class UsersResource extends BaseResource {
   /**
    * List organization users with optional pagination
    */
-  async list(params?: UserListParams): Promise<UserListResponse> {
-    const response = await this.get<UserListResponse>('/users', params);
-    return {
-      users: response.users || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/users']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/users', { params: { query: params } }));
   }
 
   /**
-   * Retrieve a single user by ID
+   * Get a single user by ID
    */
-  async retrieve(userId: string): Promise<{ user: User }> {
-    return this.get<{ user: User }>(`/users/${userId}`);
+  async get(userId: string) {
+    return this.unwrap(this.api.GET('/users/{id}', { params: { path: { id: userId } } }));
   }
 }

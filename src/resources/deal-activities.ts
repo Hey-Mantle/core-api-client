@@ -1,59 +1,24 @@
 import { BaseResource } from './base';
-import type {
-  DealActivity,
-  DealActivityCreateParams,
-  DealActivityUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
-/**
- * Resource for managing deal activities
- */
 export class DealActivitiesResource extends BaseResource {
-  /**
-   * List all deal activities
-   */
-  async list(): Promise<{ dealActivities: DealActivity[] }> {
-    return this.get<{ dealActivities: DealActivity[] }>('/deal_activities');
+  async list(params?: paths['/deal_activities']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/deal_activities', { params: { query: params } }));
   }
 
-  /**
-   * Retrieve a single deal activity by ID
-   */
-  async retrieve(
-    dealActivityId: string
-  ): Promise<{ dealActivity: DealActivity }> {
-    return this.get<{ dealActivity: DealActivity }>(
-      `/deal_activities/${dealActivityId}`
-    );
+  async get(dealActivityId: string) {
+    return this.unwrap(this.api.GET('/deal_activities/{id}', { params: { path: { id: dealActivityId } } }));
   }
 
-  /**
-   * Create a new deal activity
-   */
-  async create(
-    data: DealActivityCreateParams
-  ): Promise<{ dealActivity: DealActivity }> {
-    return this.post<{ dealActivity: DealActivity }>('/deal_activities', data);
+  async create(data: paths['/deal_activities']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/deal_activities', { body: data }));
   }
 
-  /**
-   * Update an existing deal activity
-   */
-  async update(
-    dealActivityId: string,
-    data: DealActivityUpdateParams
-  ): Promise<{ dealActivity: DealActivity }> {
-    return this.put<{ dealActivity: DealActivity }>(
-      `/deal_activities/${dealActivityId}`,
-      data
-    );
+  async update(dealActivityId: string, data: paths['/deal_activities/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/deal_activities/{id}', { params: { path: { id: dealActivityId } }, body: data }));
   }
 
-  /**
-   * Delete a deal activity
-   */
-  async del(dealActivityId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/deal_activities/${dealActivityId}`);
+  async del(dealActivityId: string) {
+    return this.unwrap(this.api.DELETE('/deal_activities/{id}', { params: { path: { id: dealActivityId } } }));
   }
 }
