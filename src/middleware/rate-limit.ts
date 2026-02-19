@@ -1,228 +1,134 @@
-import type { Middleware } from './types'
-import { MantleRateLimitError } from '../utils/errors'
+import type { Middleware } from 'openapi-fetch';
 
 /**
  * Options for the rate limit middleware
  */
 export interface RateLimitOptions {
-  /**
-   * Enable automatic retry on 429 responses
-   * @default false
-   */
-  enableRetry?: boolean
-
-  /**
-   * Enable preemptive throttling to avoid hitting rate limits
-   * @default false
-   */
-  enableThrottle?: boolean
-
-  // Retry options (when enableRetry: true)
-
-  /**
-   * Maximum number of retry attempts
-   * @default 3
-   */
-  maxRetries?: number
-
-  /**
-   * Base delay in milliseconds for retries when no retryAfter is provided
-   * @default 1000
-   */
-  baseDelay?: number
-
-  /**
-   * Use exponential backoff for retries
-   * @default true
-   */
-  exponentialBackoff?: boolean
-
-  /**
-   * Add random jitter to retry delays to prevent thundering herd
-   * @default true
-   */
-  jitter?: boolean
-
-  // Throttle options (when enableThrottle: true)
-
-  /**
-   * Maximum requests per minute (primary limit)
-   * @default 1000
-   */
-  requestsPerMinute?: number
-
-  /**
-   * Maximum requests per burst window
-   * @default 5000
-   */
-  burstLimit?: number
-
-  /**
-   * Burst window in milliseconds
-   * @default 300000 (5 minutes)
-   */
-  burstWindowMs?: number
-
-  /**
-   * Start throttling when usage reaches this percentage of the limit (0-1)
-   * @default 0.9
-   */
-  throttleThreshold?: number
+  /** Enable automatic retry on 429 responses (default: false) */
+  enableRetry?: boolean;
+  /** Enable preemptive throttling to avoid hitting rate limits (default: false) */
+  enableThrottle?: boolean;
+  /** Maximum number of retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Base delay in milliseconds for retries (default: 1000) */
+  baseDelay?: number;
+  /** Use exponential backoff for retries (default: true) */
+  exponentialBackoff?: boolean;
+  /** Add random jitter to retry delays (default: true) */
+  jitter?: boolean;
+  /** Maximum requests per minute (default: 1000) */
+  requestsPerMinute?: number;
+  /** Maximum requests per burst window (default: 5000) */
+  burstLimit?: number;
+  /** Burst window in milliseconds (default: 300000 / 5 minutes) */
+  burstWindowMs?: number;
+  /** Start throttling when usage reaches this percentage (0-1, default: 0.9) */
+  throttleThreshold?: number;
 }
 
 /**
- * Class for tracking request rates using a sliding window.
+ * Sliding window rate limiter.
  * Exported for testing purposes.
  */
 export class RateLimiter {
-  private timestamps: number[] = []
-  private readonly requestsPerMinute: number
-  private readonly burstLimit: number
-  private readonly burstWindowMs: number
-  private readonly throttleThreshold: number
+  private timestamps: number[] = [];
+  private readonly requestsPerMinute: number;
+  private readonly burstLimit: number;
+  private readonly burstWindowMs: number;
+  private readonly throttleThreshold: number;
 
   constructor(options: {
-    requestsPerMinute: number
-    burstLimit: number
-    burstWindowMs: number
-    throttleThreshold: number
+    requestsPerMinute: number;
+    burstLimit: number;
+    burstWindowMs: number;
+    throttleThreshold: number;
   }) {
-    this.requestsPerMinute = options.requestsPerMinute
-    this.burstLimit = options.burstLimit
-    this.burstWindowMs = options.burstWindowMs
-    this.throttleThreshold = options.throttleThreshold
+    this.requestsPerMinute = options.requestsPerMinute;
+    this.burstLimit = options.burstLimit;
+    this.burstWindowMs = options.burstWindowMs;
+    this.throttleThreshold = options.throttleThreshold;
   }
 
-  /**
-   * Prune timestamps older than the burst window
-   */
   private prune(): void {
-    const now = Date.now()
-    const cutoff = now - this.burstWindowMs
-    this.timestamps = this.timestamps.filter((ts) => ts > cutoff)
+    const cutoff = Date.now() - this.burstWindowMs;
+    this.timestamps = this.timestamps.filter((ts) => ts > cutoff);
   }
 
-  /**
-   * Get current usage statistics
-   */
   getUsage(): { minuteUsage: number; burstUsage: number } {
-    this.prune()
-    const now = Date.now()
-    const oneMinuteAgo = now - 60_000
-
-    const minuteUsage = this.timestamps.filter((ts) => ts > oneMinuteAgo).length
-    const burstUsage = this.timestamps.length
-
-    return { minuteUsage, burstUsage }
+    this.prune();
+    const oneMinuteAgo = Date.now() - 60_000;
+    const minuteUsage = this.timestamps.filter((ts) => ts > oneMinuteAgo).length;
+    return { minuteUsage, burstUsage: this.timestamps.length };
   }
 
-  /**
-   * Calculate the delay needed before the next request can be made
-   * Returns 0 if no delay is needed
-   */
   getDelay(): number {
-    const { minuteUsage, burstUsage } = this.getUsage()
+    const { minuteUsage, burstUsage } = this.getUsage();
+    const minuteThreshold = Math.floor(this.requestsPerMinute * this.throttleThreshold);
+    const burstThreshold = Math.floor(this.burstLimit * this.throttleThreshold);
+    const now = Date.now();
 
-    const minuteThreshold = Math.floor(this.requestsPerMinute * this.throttleThreshold)
-    const burstThreshold = Math.floor(this.burstLimit * this.throttleThreshold)
-
-    // Check if we're approaching the minute limit
     if (minuteUsage >= minuteThreshold) {
-      // Find the oldest timestamp in the last minute and wait until it expires
-      const now = Date.now()
-      const oneMinuteAgo = now - 60_000
-      const oldestInMinute = this.timestamps.find((ts) => ts > oneMinuteAgo)
-
-      if (oldestInMinute) {
-        // Wait until this timestamp is older than 1 minute
-        const delay = oldestInMinute + 60_000 - now
-        if (delay > 0) {
-          return delay
-        }
+      const oneMinuteAgo = now - 60_000;
+      const oldest = this.timestamps.find((ts) => ts > oneMinuteAgo);
+      if (oldest) {
+        const delay = oldest + 60_000 - now;
+        if (delay > 0) return delay;
       }
     }
 
-    // Check if we're approaching the burst limit
     if (burstUsage >= burstThreshold) {
-      const now = Date.now()
-      const burstCutoff = now - this.burstWindowMs
-      const oldestInBurst = this.timestamps.find((ts) => ts > burstCutoff)
-
-      if (oldestInBurst) {
-        // Wait until this timestamp is older than the burst window
-        const delay = oldestInBurst + this.burstWindowMs - now
-        if (delay > 0) {
-          return delay
-        }
+      const burstCutoff = now - this.burstWindowMs;
+      const oldest = this.timestamps.find((ts) => ts > burstCutoff);
+      if (oldest) {
+        const delay = oldest + this.burstWindowMs - now;
+        if (delay > 0) return delay;
       }
     }
 
-    return 0
+    return 0;
   }
 
-  /**
-   * Record a request timestamp
-   */
   recordRequest(): void {
-    this.timestamps.push(Date.now())
+    this.timestamps.push(Date.now());
   }
 }
 
-/**
- * Calculate retry delay with optional exponential backoff and jitter
- */
 function calculateRetryDelay(
-  retryAfter: number | undefined,
+  retryAfterHeader: string | null,
   retryCount: number,
   options: { baseDelay: number; exponentialBackoff: boolean; jitter: boolean }
 ): number {
-  let delay: number
+  if (retryAfterHeader) {
+    const retryAfter = parseInt(retryAfterHeader, 10);
+    if (!isNaN(retryAfter) && retryAfter > 0) {
+      return retryAfter * 1000;
+    }
+  }
 
-  if (retryAfter !== undefined && retryAfter > 0) {
-    // Use the server-provided retry-after (convert from seconds to ms)
-    // Don't apply jitter here - retryAfter is the minimum time to wait
-    return retryAfter * 1000
-  } else if (options.exponentialBackoff) {
-    // Exponential backoff: baseDelay * 2^retryCount
-    delay = options.baseDelay * Math.pow(2, retryCount)
+  let delay: number;
+  if (options.exponentialBackoff) {
+    delay = options.baseDelay * Math.pow(2, retryCount);
   } else {
-    delay = options.baseDelay
+    delay = options.baseDelay;
   }
 
-  // Only apply jitter to calculated delays, not server-provided retryAfter
   if (options.jitter) {
-    // Add ±25% random jitter
-    const jitterFactor = 0.75 + Math.random() * 0.5
-    delay = Math.floor(delay * jitterFactor)
+    const jitterFactor = 0.75 + Math.random() * 0.5;
+    delay = Math.floor(delay * jitterFactor);
   }
 
-  return delay
+  return delay;
 }
 
 /**
- * Creates a middleware that handles rate limiting with optional retry and throttling
+ * Creates an openapi-fetch middleware that handles rate limiting with
+ * optional retry and preemptive throttling.
  *
  * @example
  * ```typescript
- * const client = new MantleCoreClient({ ... });
- *
- * // Enable retry on 429 responses
- * client.use(createRateLimitMiddleware({
- *   enableRetry: true,
- * }));
- *
- * // Enable preemptive throttling
- * client.use(createRateLimitMiddleware({
- *   enableThrottle: true,
- * }));
- *
- * // Enable both features
- * client.use(createRateLimitMiddleware({
- *   enableRetry: true,
- *   enableThrottle: true,
- *   maxRetries: 5,
- *   requestsPerMinute: 500,
- * }));
+ * client.use(createRateLimitMiddleware({ enableRetry: true }));
+ * client.use(createRateLimitMiddleware({ enableThrottle: true }));
+ * client.use(createRateLimitMiddleware({ enableRetry: true, enableThrottle: true }));
  * ```
  */
 export function createRateLimitMiddleware(options: RateLimitOptions = {}): Middleware {
@@ -237,52 +143,54 @@ export function createRateLimitMiddleware(options: RateLimitOptions = {}): Middl
     burstLimit = 5000,
     burstWindowMs = 300_000,
     throttleThreshold = 0.9,
-  } = options
+  } = options;
 
-  // Create rate limiter if throttling is enabled
   const rateLimiter = enableThrottle
-    ? new RateLimiter({
-        requestsPerMinute,
-        burstLimit,
-        burstWindowMs,
-        throttleThreshold,
-      })
-    : null
+    ? new RateLimiter({ requestsPerMinute, burstLimit, burstWindowMs, throttleThreshold })
+    : null;
 
-  return async (ctx, next) => {
-    // Preemptive throttling: delay if we're approaching limits
-    if (rateLimiter) {
-      const delay = rateLimiter.getDelay()
-      if (delay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay))
-      }
-    }
+  let retryCount = 0;
 
-    try {
-      await next()
-
-      // Record successful request for throttling
-      rateLimiter?.recordRequest()
-    } catch (error) {
-      // Record the request even on error (it still counts against limits)
-      rateLimiter?.recordRequest()
-
-      // Handle rate limit errors with retry
-      if (enableRetry && error instanceof MantleRateLimitError) {
-        if (ctx.retryCount < maxRetries) {
-          const delay = calculateRetryDelay(error.retryAfter, ctx.retryCount, {
-            baseDelay,
-            exponentialBackoff,
-            jitter,
-          })
-
-          await new Promise((resolve) => setTimeout(resolve, delay))
-          ctx.retry = true
-          return
+  return {
+    async onRequest({ request }) {
+      if (rateLimiter) {
+        const delay = rateLimiter.getDelay();
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
+      return request;
+    },
 
-      throw error
-    }
-  }
+    async onResponse({ request, response }) {
+      rateLimiter?.recordRequest();
+
+      if (response.status !== 429 || !enableRetry) return undefined;
+      if (retryCount >= maxRetries) {
+        retryCount = 0;
+        return undefined;
+      }
+
+      const delay = calculateRetryDelay(
+        response.headers.get('Retry-After'),
+        retryCount,
+        { baseDelay, exponentialBackoff, jitter }
+      );
+      retryCount++;
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      const retryResponse = await fetch(new Request(request.url, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        signal: request.signal,
+      }));
+
+      if (retryResponse.status !== 429) {
+        retryCount = 0;
+      }
+
+      return retryResponse;
+    },
+  };
 }

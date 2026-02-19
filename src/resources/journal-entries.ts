@@ -1,12 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  JournalEntry,
-  JournalEntryListParams,
-  JournalEntryListResponse,
-  JournalEntryCreateParams,
-  JournalEntryUpdateParams,
-} from '../types/journal-entries';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing journal entries
@@ -15,57 +8,35 @@ export class JournalEntriesResource extends BaseResource {
   /**
    * List journal entries with optional filters and pagination
    */
-  async list(
-    params?: JournalEntryListParams
-  ): Promise<JournalEntryListResponse> {
-    const response = await this.get<JournalEntryListResponse>(
-      '/journal_entries',
-      params
-    );
-    return {
-      journalEntries: response.journalEntries || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/journal_entries']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/journal_entries', { params: { query: params } }));
   }
 
   /**
    * Retrieve a single journal entry by ID
    */
-  async retrieve(entryId: string): Promise<{ journalEntry: JournalEntry }> {
-    return this.get<{ journalEntry: JournalEntry }>(
-      `/journal_entries/${entryId}`
-    );
+  async retrieve(entryId: string, params?: paths['/journal_entries/{id}']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/journal_entries/{id}', { params: { path: { id: entryId }, query: params } }));
   }
 
   /**
    * Create a new journal entry
    */
-  async create(
-    data: JournalEntryCreateParams
-  ): Promise<{ journalEntry: JournalEntry }> {
-    return this.post<{ journalEntry: JournalEntry }>('/journal_entries', data);
+  async create(data: paths['/journal_entries']['post']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.POST('/journal_entries', { body: data }));
   }
 
   /**
    * Update an existing journal entry
    */
-  async update(
-    entryId: string,
-    data: JournalEntryUpdateParams
-  ): Promise<{ journalEntry: JournalEntry }> {
-    return this.put<{ journalEntry: JournalEntry }>(
-      `/journal_entries/${entryId}`,
-      data
-    );
+  async update(entryId: string, data: paths['/journal_entries/{id}']['put']['requestBody']['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/journal_entries/{id}', { params: { path: { id: entryId } }, body: data }));
   }
 
   /**
    * Delete a journal entry
    */
-  async del(entryId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/journal_entries/${entryId}`);
+  async del(entryId: string) {
+    return this.unwrap(this.api.DELETE('/journal_entries/{id}', { params: { path: { id: entryId } } }));
   }
 }

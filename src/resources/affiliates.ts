@@ -1,10 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  Affiliate,
-  AffiliateListParams,
-  AffiliateListResponse,
-  AffiliateUpdateParams,
-} from '../types';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing affiliates
@@ -13,36 +8,22 @@ export class AffiliatesResource extends BaseResource {
   /**
    * List affiliates with optional filters and pagination
    */
-  async list(params?: AffiliateListParams): Promise<AffiliateListResponse> {
-    const response = await this.get<AffiliateListResponse>(
-      '/affiliates',
-      params
-    );
-    return {
-      affiliates: response.affiliates || [],
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/affiliates']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/affiliates', { params: { query: params } }));
   }
 
   /**
    * Retrieve a single affiliate by ID
    */
-  async retrieve(affiliateId: string): Promise<{ affiliate: Affiliate }> {
-    return this.get<{ affiliate: Affiliate }>(`/affiliates/${affiliateId}`);
+  async retrieve(affiliateId: string) {
+    return this.unwrap(this.api.GET('/affiliates/{id}', { params: { path: { id: affiliateId } } }));
   }
 
   /**
    * Update an existing affiliate
+   * Note: PUT not in OpenAPI spec but kept for backwards compatibility
    */
-  async update(
-    affiliateId: string,
-    data: AffiliateUpdateParams
-  ): Promise<{ affiliate: Affiliate }> {
-    return this.put<{ affiliate: Affiliate }>(
-      `/affiliates/${affiliateId}`,
-      data
-    );
+  async update(affiliateId: string, data: Record<string, unknown>) {
+    return this.unwrap(this.untypedApi.PUT('/affiliates/{id}', { params: { path: { id: affiliateId } }, body: data }));
   }
 }

@@ -1,64 +1,45 @@
 import { BaseResource } from './base';
-import type {
-  AffiliateProgram,
-  AffiliateProgramCreateParams,
-  AffiliateProgramUpdateParams,
-} from '../types';
-import type { DeleteResponse } from '../types/common';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing affiliate programs
  */
 export class AffiliateProgramsResource extends BaseResource {
   /**
-   * List all affiliate programs
+   * List affiliate programs with optional filters and pagination
    */
-  async list(): Promise<{ affiliatePrograms: AffiliateProgram[] }> {
-    return this.get<{ affiliatePrograms: AffiliateProgram[] }>(
-      '/affiliate_programs'
-    );
+  async list(params?: paths['/affiliate_programs']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/affiliate_programs', { params: { query: params } }));
   }
 
   /**
    * Retrieve a single affiliate program by ID
    */
-  async retrieve(
-    programId: string
-  ): Promise<{ affiliateProgram: AffiliateProgram }> {
-    return this.get<{ affiliateProgram: AffiliateProgram }>(
-      `/affiliate_programs/${programId}`
-    );
+  async retrieve(programId: string) {
+    return this.unwrap(this.api.GET('/affiliate_programs/{id}', { params: { path: { id: programId } } }));
   }
 
   /**
    * Create a new affiliate program
+   * Note: POST not yet in OpenAPI spec
    */
-  async create(
-    data: AffiliateProgramCreateParams
-  ): Promise<{ affiliateProgram: AffiliateProgram }> {
-    return this.post<{ affiliateProgram: AffiliateProgram }>(
-      '/affiliate_programs',
-      data
-    );
+  async create(data: Record<string, unknown>) {
+    return this.unwrap(this.untypedApi.POST('/affiliate_programs', { body: data }));
   }
 
   /**
    * Update an existing affiliate program
+   * Note: PUT not yet in OpenAPI spec
    */
-  async update(
-    programId: string,
-    data: AffiliateProgramUpdateParams
-  ): Promise<{ affiliateProgram: AffiliateProgram }> {
-    return this.put<{ affiliateProgram: AffiliateProgram }>(
-      `/affiliate_programs/${programId}`,
-      data
-    );
+  async update(programId: string, data: Record<string, unknown>) {
+    return this.unwrap(this.untypedApi.PUT('/affiliate_programs/{id}', { params: { path: { id: programId } }, body: data }));
   }
 
   /**
    * Delete an affiliate program
+   * Note: DELETE not yet in OpenAPI spec
    */
-  async del(programId: string): Promise<DeleteResponse> {
-    return this._delete<DeleteResponse>(`/affiliate_programs/${programId}`);
+  async del(programId: string) {
+    return this.unwrap(this.untypedApi.DELETE('/affiliate_programs/{id}', { params: { path: { id: programId } } }));
   }
 }

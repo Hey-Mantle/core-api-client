@@ -1,6 +1,6 @@
 {
   "name": "@heymantle/core-api-client",
-  "version": "0.1.27",
+  "version": "0.2.0",
   "description": "TypeScript SDK for the Mantle Core API",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "generate": "tsx scripts/generate.ts",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -48,11 +49,16 @@
     "@types/node": "^20.11.0",
     "@vitest/coverage-v8": "^1.2.0",
     "@vitest/ui": "^1.2.0",
+    "openapi-typescript": "^7.13.0",
     "tsup": "^8.0.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.3",
     "vitest": "^1.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

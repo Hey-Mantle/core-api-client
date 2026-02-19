@@ -1,104 +1,87 @@
-import type { Middleware } from './types'
-import { MantleAuthenticationError } from '../utils/errors'
+import type { Middleware } from 'openapi-fetch';
 
 /**
  * Options for the auth refresh middleware
  */
 export interface AuthRefreshOptions {
   /**
-   * Function to refresh the access token
-   * Should return the new access token
+   * Function to refresh the access token.
+   * Should return the new access token.
    */
-  refreshToken: () => Promise<string>
-
+  refreshToken: () => Promise<string>;
   /**
-   * Optional callback when refresh succeeds
+   * Callback invoked when the client instance's auth should be updated.
+   * Receives the new token string.
    */
-  onRefreshSuccess?: (newToken: string) => void
-
-  /**
-   * Optional callback when refresh fails
-   */
-  onRefreshFailed?: (error: Error) => void
-
-  /**
-   * Maximum refresh attempts per request (default: 1)
-   */
-  maxRefreshAttempts?: number
+  updateAuth: (newToken: string) => void;
+  /** Optional callback when refresh succeeds */
+  onRefreshSuccess?: (newToken: string) => void;
+  /** Optional callback when refresh fails */
+  onRefreshFailed?: (error: Error) => void;
+  /** Maximum refresh attempts per request (default: 1) */
+  maxRefreshAttempts?: number;
 }
 
 /**
- * Creates a middleware that automatically refreshes access tokens on 401 errors
+ * Creates an openapi-fetch middleware that automatically refreshes access
+ * tokens on 401 responses.
  *
  * @example
  * ```typescript
- * const client = new MantleCoreClient({
- *   accessToken: 'initial-token',
- * });
+ * const client = new MantleCoreClient({ accessToken: 'initial-token' });
  *
  * client.use(createAuthRefreshMiddleware({
  *   refreshToken: async () => {
- *     const response = await fetch('/refresh', { method: 'POST' });
- *     const data = await response.json();
+ *     const res = await fetch('/refresh', { method: 'POST' });
+ *     const data = await res.json();
  *     return data.accessToken;
  *   },
- *   onRefreshSuccess: (newToken) => {
- *     // Persist the new token
- *     localStorage.setItem('accessToken', newToken);
- *   },
- * }), { name: 'auth-refresh' });
+ *   updateAuth: (newToken) => client.updateAuth({ accessToken: newToken }),
+ *   onRefreshSuccess: (newToken) => localStorage.setItem('accessToken', newToken),
+ * }));
  * ```
  */
 export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middleware {
   const {
     refreshToken,
+    updateAuth,
     onRefreshSuccess,
     onRefreshFailed,
     maxRefreshAttempts = 1,
-  } = options
+  } = options;
 
-  let refreshAttempts = 0
+  let refreshAttempts = 0;
 
-  return async (ctx, next) => {
-    try {
-      await next()
-    } catch (error) {
-      // Only handle authentication errors
-      if (!(error instanceof MantleAuthenticationError)) {
-        throw error
-      }
-
-      // Check if we've exceeded refresh attempts
+  return {
+    async onResponse({ request, response }) {
+      if (response.status !== 401) return undefined;
       if (refreshAttempts >= maxRefreshAttempts) {
-        refreshAttempts = 0
-        throw error
+        refreshAttempts = 0;
+        return undefined;
       }
 
-      refreshAttempts++
+      refreshAttempts++;
 
       try {
-        // Attempt to refresh the token
-        const newToken = await refreshToken()
+        const newToken = await refreshToken();
+        updateAuth(newToken);
+        onRefreshSuccess?.(newToken);
+        refreshAttempts = 0;
 
-        // Update client auth
-        ctx.updateAuth({ accessToken: newToken })
-
-        // Update request headers for retry
-        ctx.request.headers.Authorization = `Bearer ${newToken}`
-
-        // Notify success
-        onRefreshSuccess?.(newToken)
-
-        // Signal retry
-        ctx.retry = true
-        refreshAttempts = 0
+        // Retry the original request with the new token
+        const headers = new Headers(request.headers);
+        headers.set('Authorization', `Bearer ${newToken}`);
+        return fetch(new Request(request.url, {
+          method: request.method,
+          headers,
+          body: request.body,
+          signal: request.signal,
+        }));
       } catch (refreshError) {
-        refreshAttempts = 0
-        onRefreshFailed?.(refreshError as Error)
-        throw new MantleAuthenticationError(
-          'Authentication failed. Please re-authenticate.'
-        )
+        refreshAttempts = 0;
+        onRefreshFailed?.(refreshError as Error);
+        return undefined;
       }
-    }
-  }
+    },
+  };
 }

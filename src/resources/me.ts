@@ -1,14 +1,11 @@
 import { BaseResource } from './base';
-import type { MeResponse } from '../types';
 
 /**
- * Resource for retrieving current user and organization info
+ * Resource for the current user endpoint.
+ * Note: /me is not yet in the OpenAPI spec.
  */
 export class MeResource extends BaseResource {
-  /**
-   * Get current user and organization info
-   */
-  async retrieve(): Promise<MeResponse> {
-    return this.client.get<MeResponse>('/me');
+  async retrieve() {
+    return this.unwrap(this.untypedApi.GET('/me', {}));
   }
 }

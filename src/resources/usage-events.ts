@@ -1,10 +1,5 @@
 import { BaseResource } from './base';
-import type {
-  UsageEventListParams,
-  UsageEventListResponse,
-  UsageEventCreateParams,
-  UsageEventCreateResponse,
-} from '../types';
+import type { paths } from '../generated/api';
 
 /**
  * Resource for managing usage events
@@ -13,19 +8,8 @@ export class UsageEventsResource extends BaseResource {
   /**
    * List usage events with optional filters and pagination
    */
-  async list(params?: UsageEventListParams): Promise<UsageEventListResponse> {
-    const response = await this.get<UsageEventListResponse>(
-      '/usage_events',
-      params
-    );
-    return {
-      usageEvents: response.usageEvents || response.events || [],
-      events: response.events,
-      hasNextPage: response.hasNextPage || false,
-      hasPreviousPage: response.hasPreviousPage || false,
-      total: response.total,
-      cursor: response.cursor,
-    };
+  async list(params?: paths['/usage_events']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/usage_events', { params: { query: params } }));
   }
 
   /**
@@ -49,9 +33,7 @@ export class UsageEventsResource extends BaseResource {
    *   ],
    * });
    */
-  async create(
-    data: UsageEventCreateParams
-  ): Promise<UsageEventCreateResponse> {
-    return this.post<UsageEventCreateResponse>('/usage_events', data);
+  async create(data?: NonNullable<paths['/usage_events']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/usage_events', { body: data }));
   }
 }
