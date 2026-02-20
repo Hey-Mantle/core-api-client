@@ -13,45 +13,47 @@ function createTimeoutSignal(ms: number): AbortSignal {
   return controller.signal;
 }
 
-// Import all resources
-import { CustomersResource } from './resources/customers';
-import { ContactsResource } from './resources/contacts';
-import { SubscriptionsResource } from './resources/subscriptions';
-import { UsageEventsResource } from './resources/usage-events';
-import { AppsResource } from './resources/apps';
-import { DealsResource } from './resources/deals';
-import { DealFlowsResource } from './resources/deal-flows';
-import { DealActivitiesResource } from './resources/deal-activities';
-import { TicketsResource } from './resources/tickets';
-import { ChannelsResource } from './resources/channels';
-import { FlowsResource } from './resources/flows';
-import { TasksResource } from './resources/tasks';
-import { WebhooksResource } from './resources/webhooks';
-import { CompaniesResource } from './resources/companies';
-import { CustomerSegmentsResource } from './resources/customer-segments';
-import { AffiliatesResource } from './resources/affiliates';
-import { AffiliateProgramsResource } from './resources/affiliate-programs';
+// @generated-resource-imports-start
 import { AffiliateCommissionsResource } from './resources/affiliate-commissions';
 import { AffiliatePayoutsResource } from './resources/affiliate-payouts';
+import { AffiliateProgramsResource } from './resources/affiliate-programs';
 import { AffiliateReferralsResource } from './resources/affiliate-referrals';
-import { ChargesResource } from './resources/charges';
-import { TransactionsResource } from './resources/transactions';
-import { MetricsResource } from './resources/metrics';
-import { UsersResource } from './resources/users';
-import { MeResource } from './resources/me';
-import { OrganizationResource } from './resources/organization';
-import { AgentsResource } from './resources/agents';
-import { DocsResource } from './resources/docs';
-import { EntitiesResource } from './resources/entities';
-import { CustomDataResource } from './resources/custom-data';
-import { TimelineCommentsResource } from './resources/timelineComments';
-import { ListsResource } from './resources/lists';
-import { JournalEntriesResource } from './resources/journal-entries';
-import { EmailUnsubscribeGroupsResource } from './resources/email-unsubscribe-groups';
-import { FlowExtensionsResource } from './resources/flow-extensions';
+import { AffiliatesResource } from './resources/affiliates';
 import { AiAgentRunsResource } from './resources/ai-agent-runs';
+import { AppsResource } from './resources/apps';
+import { AssistantResource } from './resources/assistant';
+import { ChannelsResource } from './resources/channels';
+import { ChargesResource } from './resources/charges';
+import { CompaniesResource } from './resources/companies';
+import { ContactsResource } from './resources/contacts';
+import { CustomDataResource } from './resources/custom-data';
+import { CustomerSegmentsResource } from './resources/customer-segments';
+import { CustomersResource } from './resources/customers';
+import { DealActivitiesResource } from './resources/deal-activities';
+import { DealFlowsResource } from './resources/deal-flows';
+import { DealsResource } from './resources/deals';
+import { DocsResource } from './resources/docs';
+import { EmailUnsubscribeGroupsResource } from './resources/email-unsubscribe-groups';
+import { EntitiesResource } from './resources/entities';
+import { FlowExtensionsResource } from './resources/flow-extensions';
+import { FlowsResource } from './resources/flows';
+import { JournalEntriesResource } from './resources/journal-entries';
+import { ListsResource } from './resources/lists';
 import { MeetingsResource } from './resources/meetings';
+import { MeResource } from './resources/me';
+import { MetricsResource } from './resources/metrics';
+import { OrganizationResource } from './resources/organization';
+import { SubscriptionsResource } from './resources/subscriptions';
 import { SyncedEmailsResource } from './resources/synced-emails';
+import { TasksResource } from './resources/tasks';
+import { TicketsResource } from './resources/tickets';
+import { TimelineCommentsResource } from './resources/timeline-comments';
+import { TransactionsResource } from './resources/transactions';
+import { UsageEventsResource } from './resources/usage-events';
+import { UsersResource } from './resources/users';
+import { WebhooksResource } from './resources/webhooks';
+import { AgentsResource } from './resources/agents';
+// @generated-resource-imports-end
 
 /**
  * Mantle Core API Client
@@ -78,45 +80,47 @@ export class MantleCoreClient {
   private apiKey?: string;
   private accessToken?: string;
 
-  // Resources
-  public readonly customers: CustomersResource;
-  public readonly contacts: ContactsResource;
-  public readonly subscriptions: SubscriptionsResource;
-  public readonly usageEvents: UsageEventsResource;
-  public readonly apps: AppsResource;
-  public readonly deals: DealsResource;
-  public readonly dealFlows: DealFlowsResource;
-  public readonly dealActivities: DealActivitiesResource;
-  public readonly tickets: TicketsResource;
-  public readonly channels: ChannelsResource;
-  public readonly flows: FlowsResource;
-  public readonly tasks: TasksResource;
-  public readonly webhooks: WebhooksResource;
-  public readonly companies: CompaniesResource;
-  public readonly customerSegments: CustomerSegmentsResource;
-  public readonly affiliates: AffiliatesResource;
-  public readonly affiliatePrograms: AffiliateProgramsResource;
+  // @generated-resource-properties-start
   public readonly affiliateCommissions: AffiliateCommissionsResource;
   public readonly affiliatePayouts: AffiliatePayoutsResource;
+  public readonly affiliatePrograms: AffiliateProgramsResource;
   public readonly affiliateReferrals: AffiliateReferralsResource;
-  public readonly charges: ChargesResource;
-  public readonly transactions: TransactionsResource;
-  public readonly metrics: MetricsResource;
-  public readonly users: UsersResource;
-  public readonly me: MeResource;
-  public readonly organization: OrganizationResource;
-  public readonly agents: AgentsResource;
-  public readonly docs: DocsResource;
-  public readonly entities: EntitiesResource;
-  public readonly customData: CustomDataResource;
-  public readonly timelineComments: TimelineCommentsResource;
-  public readonly lists: ListsResource;
-  public readonly journalEntries: JournalEntriesResource;
-  public readonly emailUnsubscribeGroups: EmailUnsubscribeGroupsResource;
-  public readonly flowExtensions: FlowExtensionsResource;
+  public readonly affiliates: AffiliatesResource;
   public readonly aiAgentRuns: AiAgentRunsResource;
+  public readonly apps: AppsResource;
+  public readonly assistant: AssistantResource;
+  public readonly channels: ChannelsResource;
+  public readonly charges: ChargesResource;
+  public readonly companies: CompaniesResource;
+  public readonly contacts: ContactsResource;
+  public readonly customData: CustomDataResource;
+  public readonly customerSegments: CustomerSegmentsResource;
+  public readonly customers: CustomersResource;
+  public readonly dealActivities: DealActivitiesResource;
+  public readonly dealFlows: DealFlowsResource;
+  public readonly deals: DealsResource;
+  public readonly docs: DocsResource;
+  public readonly emailUnsubscribeGroups: EmailUnsubscribeGroupsResource;
+  public readonly entities: EntitiesResource;
+  public readonly flowExtensions: FlowExtensionsResource;
+  public readonly flows: FlowsResource;
+  public readonly journalEntries: JournalEntriesResource;
+  public readonly lists: ListsResource;
   public readonly meetings: MeetingsResource;
+  public readonly me: MeResource;
+  public readonly metrics: MetricsResource;
+  public readonly organization: OrganizationResource;
+  public readonly subscriptions: SubscriptionsResource;
   public readonly syncedEmails: SyncedEmailsResource;
+  public readonly tasks: TasksResource;
+  public readonly tickets: TicketsResource;
+  public readonly timelineComments: TimelineCommentsResource;
+  public readonly transactions: TransactionsResource;
+  public readonly usageEvents: UsageEventsResource;
+  public readonly users: UsersResource;
+  public readonly webhooks: WebhooksResource;
+  public readonly agents: AgentsResource;
+  // @generated-resource-properties-end
 
   constructor(config: MantleCoreClientConfig) {
     if (!config.apiKey && !config.accessToken && !config.fetch) {
@@ -169,45 +173,47 @@ export class MantleCoreClient {
       }
     }
 
-    // Initialize all resources
-    this.customers = new CustomersResource(this);
-    this.contacts = new ContactsResource(this);
-    this.subscriptions = new SubscriptionsResource(this);
-    this.usageEvents = new UsageEventsResource(this);
-    this.apps = new AppsResource(this);
-    this.deals = new DealsResource(this);
-    this.dealFlows = new DealFlowsResource(this);
-    this.dealActivities = new DealActivitiesResource(this);
-    this.tickets = new TicketsResource(this);
-    this.channels = new ChannelsResource(this);
-    this.flows = new FlowsResource(this);
-    this.tasks = new TasksResource(this);
-    this.webhooks = new WebhooksResource(this);
-    this.companies = new CompaniesResource(this);
-    this.customerSegments = new CustomerSegmentsResource(this);
-    this.affiliates = new AffiliatesResource(this);
-    this.affiliatePrograms = new AffiliateProgramsResource(this);
+    // @generated-resource-instantiations-start
     this.affiliateCommissions = new AffiliateCommissionsResource(this);
     this.affiliatePayouts = new AffiliatePayoutsResource(this);
+    this.affiliatePrograms = new AffiliateProgramsResource(this);
     this.affiliateReferrals = new AffiliateReferralsResource(this);
-    this.charges = new ChargesResource(this);
-    this.transactions = new TransactionsResource(this);
-    this.metrics = new MetricsResource(this);
-    this.users = new UsersResource(this);
-    this.me = new MeResource(this);
-    this.organization = new OrganizationResource(this);
-    this.agents = new AgentsResource(this);
-    this.docs = new DocsResource(this);
-    this.entities = new EntitiesResource(this);
-    this.customData = new CustomDataResource(this);
-    this.timelineComments = new TimelineCommentsResource(this);
-    this.lists = new ListsResource(this);
-    this.journalEntries = new JournalEntriesResource(this);
-    this.emailUnsubscribeGroups = new EmailUnsubscribeGroupsResource(this);
-    this.flowExtensions = new FlowExtensionsResource(this);
+    this.affiliates = new AffiliatesResource(this);
     this.aiAgentRuns = new AiAgentRunsResource(this);
+    this.apps = new AppsResource(this);
+    this.assistant = new AssistantResource(this);
+    this.channels = new ChannelsResource(this);
+    this.charges = new ChargesResource(this);
+    this.companies = new CompaniesResource(this);
+    this.contacts = new ContactsResource(this);
+    this.customData = new CustomDataResource(this);
+    this.customerSegments = new CustomerSegmentsResource(this);
+    this.customers = new CustomersResource(this);
+    this.dealActivities = new DealActivitiesResource(this);
+    this.dealFlows = new DealFlowsResource(this);
+    this.deals = new DealsResource(this);
+    this.docs = new DocsResource(this);
+    this.emailUnsubscribeGroups = new EmailUnsubscribeGroupsResource(this);
+    this.entities = new EntitiesResource(this);
+    this.flowExtensions = new FlowExtensionsResource(this);
+    this.flows = new FlowsResource(this);
+    this.journalEntries = new JournalEntriesResource(this);
+    this.lists = new ListsResource(this);
     this.meetings = new MeetingsResource(this);
+    this.me = new MeResource(this);
+    this.metrics = new MetricsResource(this);
+    this.organization = new OrganizationResource(this);
+    this.subscriptions = new SubscriptionsResource(this);
     this.syncedEmails = new SyncedEmailsResource(this);
+    this.tasks = new TasksResource(this);
+    this.tickets = new TicketsResource(this);
+    this.timelineComments = new TimelineCommentsResource(this);
+    this.transactions = new TransactionsResource(this);
+    this.usageEvents = new UsageEventsResource(this);
+    this.users = new UsersResource(this);
+    this.webhooks = new WebhooksResource(this);
+    this.agents = new AgentsResource(this);
+    // @generated-resource-instantiations-end
   }
 
   /**
