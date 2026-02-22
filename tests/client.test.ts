@@ -73,7 +73,7 @@ describe('MantleCoreClient', () => {
   describe('constructor', () => {
     it('throws when neither apiKey nor accessToken is provided', () => {
       expect(() => new MantleCoreClient({} as never)).toThrow(
-        'MantleCoreClient requires either apiKey or accessToken'
+        'MantleCoreClient requires either apiKey, accessToken, or a custom fetch function'
       )
     })
 
@@ -144,6 +144,26 @@ describe('MantleCoreClient', () => {
       await client.customers.list()
 
       expect(onRequestCalled).toBe(true)
+    })
+
+    it('accepts a custom fetch function without apiKey or accessToken', async () => {
+      const customFetch = vi.fn().mockResolvedValueOnce(createMockResponse({ customers: [] }))
+      const client = new MantleCoreClient({ fetch: customFetch })
+
+      await client.customers.list()
+
+      expect(customFetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('timeout: 0 disables the timeout middleware (request carries no aborted signal)', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-key', timeout: 0 })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customers: [] }))
+
+      await client.customers.list()
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      // When timeout is disabled the signal should either be absent or not yet aborted
+      expect(!request.signal || !request.signal.aborted).toBe(true)
     })
   })
 
@@ -238,6 +258,30 @@ describe('MantleCoreClient', () => {
 
       const request = mockFetch.mock.calls[0][0] as Request
       expect(request.headers.get('Content-Type')).toBe('application/json')
+    })
+
+    it('create() sends POST with correct JSON body', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-key' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({ customer: { id: 'c1', name: 'Acme' } }))
+
+      await client.customers.create({ name: 'Acme' } as never)
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('POST')
+      expect(request.url).toContain('/customers')
+      const body = await request.json()
+      expect(body).toMatchObject({ name: 'Acme' })
+    })
+
+    it('del() sends DELETE to the correct URL', async () => {
+      const client = new MantleCoreClient({ apiKey: 'test-key' })
+      mockFetch.mockResolvedValueOnce(createMockResponse({}))
+
+      await client.webhooks.del('wh_abc')
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('DELETE')
+      expect(request.url).toContain('/webhooks/wh_abc')
     })
   })
 

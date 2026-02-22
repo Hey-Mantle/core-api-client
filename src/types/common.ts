@@ -14,4 +14,9 @@ export interface MantleCoreClientConfig {
   timeout?: number;
   /** openapi-fetch middleware to register on instantiation */
   middleware?: Middleware[];
+  /**
+   * Custom fetch implementation. When provided, auth headers should be handled
+   * by the custom fetch function (apiKey and accessToken can be omitted).
+   */
+  fetch?: typeof globalThis.fetch;
 }
