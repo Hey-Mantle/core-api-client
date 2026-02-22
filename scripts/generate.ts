@@ -652,6 +652,21 @@ function buildClientInstantiations(groups: ResourceGroup[]): string {
   return groups.map(g => `    this.${g.clientProp} = new ${g.className}(this);`).join('\n');
 }
 
+// ─── Coverage validation ──────────────────────────────────────────────────────
+
+function validateSpecCoverage(spec: Record<string, unknown>): void {
+  const specPaths = Object.keys(spec.paths as Record<string, unknown>);
+  const uncovered = specPaths.filter(p => !findResourceGroup(p));
+  if (uncovered.length === 0) {
+    console.log(`  ✓ All ${specPaths.length} spec paths are covered by a resource group`);
+    return;
+  }
+  console.error(`\n❌ ${uncovered.length} spec path(s) have no matching RESOURCE_GROUPS entry:`);
+  for (const p of uncovered) console.error(`   ${p}`);
+  console.error('\nAdd a pathPrefix to an existing ResourceGroup, or add a new entry, in scripts/generate.ts');
+  process.exit(1);
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -660,6 +675,10 @@ async function main() {
   const response = await fetch(SPEC_URL);
   if (!response.ok) throw new Error(`Failed to fetch spec: ${response.status} ${response.statusText}`);
   const spec = await response.json() as Record<string, unknown>;
+
+  // ── 1a. Validate every spec path is covered by a resource group ───────────
+  console.log('Validating spec coverage…');
+  validateSpecCoverage(spec);
 
   // ── 2. Generate src/generated/api.ts ──────────────────────────────────────
   console.log('Generating TypeScript types…');
