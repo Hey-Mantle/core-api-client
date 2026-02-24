@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SPEC_URL = 'https://app.heymantle.com/openapi/core-api.json';
+const SPEC_URL = process.argv[2] || 'https://app.heymantle.com/openapi/core-api.json';
 const ROOT = path.resolve(__dirname, '..');
 const GENERATED_API = path.resolve(ROOT, 'src/generated/api.ts');
 const RESOURCES_DIR = path.resolve(ROOT, 'src/resources');
