@@ -27,18 +27,19 @@ function toPascalCase(s: string): string {
 function singularize(word: string): string {
   if (word.endsWith('ies')) return word.slice(0, -3) + 'y';
   if (/(ses|xes|zes)$/.test(word)) return word.slice(0, -2);
-  if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+  if (word.endsWith('s') && !word.endsWith('ss') && !word.endsWith('us')) return word.slice(0, -1);
   return word;
 }
 
 function looksPlural(s: string): boolean {
-  return (s.endsWith('s') && !s.endsWith('ss')) || s.endsWith('ies');
+  return (s.endsWith('s') && !s.endsWith('ss') && !s.endsWith('us')) || s.endsWith('ies');
 }
 
 const SINGLE_WORD_ACTIONS = new Set([
   'archive', 'unarchive', 'fire', 'accept', 'dismiss', 'analyze',
   'transcribe', 'upload', 'validate', 'publish', 'unpublish',
   'add', 'remove', 'enable', 'disable', 'activate', 'deactivate',
+  'generate',
 ]);
 
 function startsWithActionVerb(s: string): boolean {
@@ -124,16 +125,19 @@ function deriveMethodName(
   }
 
   if (SINGLE_WORD_ACTIONS.has(lastNamed)) {
+    // DELETE on an action verb is the inverse: archive → unarchive, publish → unpublish
+    const verb = httpMethod === 'delete' ? `un${lastNamed}` : lastNamed;
     // Single-word action verb, possibly with a context noun suffix
     if (contextNoun && !SINGLE_WORD_ACTIONS.has(contextNoun)) {
-      // e.g. archive after plans/{planId} → archivePlan
-      return `${lastNamed}${toPascalCase(singularize(contextNoun))}`;
+      // e.g. POST archive after pages/{pageId} → archivePage
+      // e.g. DELETE archive after pages/{pageId} → unarchivePage
+      return `${verb}${toPascalCase(singularize(contextNoun))}`;
     }
     if (contextNoun && SINGLE_WORD_ACTIONS.has(contextNoun)) {
       // e.g. upload after transcribe → transcribeUpload
-      return `${snakeToCamel(contextNoun)}${toPascalCase(lastNamed)}`;
+      return `${snakeToCamel(contextNoun)}${toPascalCase(verb)}`;
     }
-    return lastNamed;
+    return verb;
   }
 
   // Regular noun segment
@@ -143,7 +147,7 @@ function deriveMethodName(
     const map: Record<string, string> = {
       get: `list${plural}`, post: `create${singular}`,
       put: `update${singular}`, patch: `update${singular}`,
-      delete: `delete${singular}`,
+      delete: `delete${plural}`,
     };
     return map[httpMethod] ?? `${httpMethod}${plural}`;
   } else {
@@ -407,6 +411,12 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     file: 'docs', className: 'DocsResource',
     clientProp: 'docs', singularName: 'doc',
     pathPrefixes: ['/docs'],
+    // Two POST /pages/generate endpoints collide — the collection-level one gets deduped
+    methodOverrides: { generatePagePost: 'generatePage' },
+    customMethods: `
+  async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));
+  }`,
   },
   {
     file: 'email-unsubscribe-groups', className: 'EmailUnsubscribeGroupsResource',
@@ -425,6 +435,8 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     clientProp: 'flowExtensions', singularName: 'extension',
     // /flow/extensions/* for actions/triggers, /flow/actions/* for action runs
     pathPrefixes: ['/flow/extensions', '/flow/actions'],
+    // Two POST /triggers endpoints collide — the by-handle one is deduped to createTriggerPost
+    methodOverrides: { createTriggerPost: 'createTriggerByHandle' },
   },
   {
     file: 'flows', className: 'FlowsResource',
@@ -445,6 +457,8 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     file: 'meetings', className: 'MeetingsResource',
     clientProp: 'meetings', singularName: 'meeting',
     pathPrefixes: ['/meetings'],
+    // GET+POST /meetings/{id}/transcribe collide — GET is status, POST starts transcription
+    methodOverrides: { transcribeGet: 'getTranscription', transcribePost: 'transcribe' },
   },
   {
     // /me is not in the spec — hand-written
@@ -509,10 +523,11 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     pathPrefixes: ['/webhooks'],
   },
   {
-    // /agents is not in the spec — hand-written
     file: 'agents', className: 'AgentsResource',
     clientProp: 'agents', singularName: 'agent',
-    pathPrefixes: [], manual: true,
+    pathPrefixes: ['/agents'],
+    // POST /agents is semantically find-or-create
+    methodOverrides: { create: 'findOrCreate' },
   },
 ];
 
@@ -560,25 +575,26 @@ function generateResourceFile(group: ResourceGroup, spec: Record<string, unknown
     const allMethodsOnPath = HTTP_METHODS.filter(m => (paths[pathStr] as Record<string, unknown>)[m]).map(String);
     const suffix = pathStr.slice(prefix.length);
     const raw = deriveMethodName(method, suffix, group.singularName, allMethodsOnPath, group.methodNaming ?? 'standard');
-    const name = group.methodOverrides?.[raw] ?? raw;
     const key = `${pathStr}::${method}`;
-    methodNameCounts.set(name, (methodNameCounts.get(name) ?? 0) + 1);
-    resolvedNames.set(key, name);
+    methodNameCounts.set(raw, (methodNameCounts.get(raw) ?? 0) + 1);
+    resolvedNames.set(key, raw);
   }
 
-  // For any collision, append HTTP method suffix
+  // For any collision, append HTTP method suffix, then apply overrides
   const finalNames = new Map<string, string>();
   const seen = new Map<string, number>();
   for (const { pathStr, method, prefix } of entries) {
     const key = `${pathStr}::${method}`;
     const name = resolvedNames.get(key)!;
     const count = methodNameCounts.get(name) ?? 1;
+    let finalName: string;
     if (count > 1) {
       const deduped = `${name}${toPascalCase(method)}`;
-      finalNames.set(key, deduped);
+      finalName = group.methodOverrides?.[deduped] ?? group.methodOverrides?.[name] ?? deduped;
     } else {
-      finalNames.set(key, name);
+      finalName = group.methodOverrides?.[name] ?? name;
     }
+    finalNames.set(key, finalName);
     seen.set(name, (seen.get(name) ?? 0) + 1);
   }
 
