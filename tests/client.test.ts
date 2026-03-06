@@ -373,6 +373,65 @@ describe('MantleCoreClient', () => {
     })
   })
 
+  describe('generated method names and HTTP methods', () => {
+    let client: MantleCoreClient
+
+    beforeEach(() => {
+      client = new MantleCoreClient({ apiKey: 'test-key' })
+    })
+
+    it('agents.findOrCreate sends POST to /agents (override)', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({ agent: { id: 'a1' } }))
+      await client.agents.findOrCreate({ name: 'Test' } as never)
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('POST')
+      expect(request.url).toContain('/agents')
+      expect(request.url).not.toContain('/agents/')
+    })
+
+    it('meetings.getTranscription sends GET to /meetings/{id}/transcribe (override)', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({ transcription: {} }))
+      await client.meetings.getTranscription('m1')
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('GET')
+      expect(request.url).toContain('/meetings/m1/transcribe')
+    })
+
+    it('meetings.transcribe sends POST to /meetings/{id}/transcribe (override)', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({ transcription: {} }))
+      await client.meetings.transcribe('m1', {} as never)
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('POST')
+      expect(request.url).toContain('/meetings/m1/transcribe')
+    })
+
+    it('docs.archivePage sends POST and unarchivePage sends DELETE (action verb inversion)', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({}))
+      await client.docs.archivePage('p1')
+      const archiveReq = mockFetch.mock.calls[0][0] as Request
+      expect(archiveReq.method).toBe('POST')
+      expect(archiveReq.url).toContain('/docs/pages/p1/archive')
+
+      mockFetch.mockResolvedValueOnce(createMockResponse({}))
+      await client.docs.unarchivePage('p1')
+      const unarchiveReq = mockFetch.mock.calls[1][0] as Request
+      expect(unarchiveReq.method).toBe('DELETE')
+      expect(unarchiveReq.url).toContain('/docs/pages/p1/archive')
+    })
+
+    it('docs.regeneratePage sends POST to /docs/pages/{id}/generate (custom method)', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({}))
+      await client.docs.regeneratePage('p1', {} as never)
+
+      const request = mockFetch.mock.calls[0][0] as Request
+      expect(request.method).toBe('POST')
+      expect(request.url).toContain('/docs/pages/p1/generate')
+    })
+  })
+
   describe('middleware', () => {
     it('use() returns this for chaining', () => {
       const client = new MantleCoreClient({ apiKey: 'test-key' })

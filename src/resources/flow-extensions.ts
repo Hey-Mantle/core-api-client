@@ -15,7 +15,7 @@ export class FlowExtensionsResource extends BaseResource {
     return this.unwrap(this.api.GET('/flow/extensions/triggers'));
   }
 
-  async createTriggerPost(data: NonNullable<paths['/flow/extensions/triggers']['post']['requestBody']>['content']['application/json']) {
+  async createTriggerByHandle(data: NonNullable<paths['/flow/extensions/triggers']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/flow/extensions/triggers', { body: data }));
   }
 
