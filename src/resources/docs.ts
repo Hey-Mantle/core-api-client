@@ -3,6 +3,10 @@ import { BaseResource } from './base';
 import type { paths } from '../generated/api';
 
 export class DocsResource extends BaseResource {
+  async getTree(params: paths['/docs/tree']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/tree', { params: { query: params } }));
+  }
+
   async listCollections(params: paths['/docs/collections']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/collections', { params: { query: params } }));
   }
@@ -19,6 +23,10 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.POST('/docs/groups', { body: data }));
   }
 
+  async generatePage(data: NonNullable<paths['/docs/pages/generate']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages/generate', { body: data }));
+  }
+
   async listPages(params?: paths['/docs/pages']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/pages', { params: { query: params } }));
   }
@@ -29,6 +37,22 @@ export class DocsResource extends BaseResource {
 
   async listRepositories(params?: paths['/docs/repositories']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories', { params: { query: params } }));
+  }
+
+  async archivePage(pageId: string) {
+    return this.unwrap(this.api.POST('/docs/pages/{page_id}/archive', { params: { path: { page_id: pageId } } }));
+  }
+
+  async unarchivePage(pageId: string) {
+    return this.unwrap(this.api.DELETE('/docs/pages/{page_id}/archive', { params: { path: { page_id: pageId } } }));
+  }
+
+  async publishPage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/publish']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages/{page_id}/publish', { params: { path: { page_id: pageId } }, body: data }));
+  }
+
+  async unpublishPage(pageId: string) {
+    return this.unwrap(this.api.DELETE('/docs/pages/{page_id}/publish', { params: { path: { page_id: pageId } } }));
   }
 
   async updateCollection(collectionId: string, data: NonNullable<paths['/docs/collections/{collection_id}']['put']['requestBody']>['content']['application/json']) {
@@ -59,7 +83,14 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
   }
 
+  async getStatus(jobKey: string) {
+    return this.unwrap(this.api.GET('/docs/pages/generate/status/{jobKey}', { params: { path: { jobKey } } }));
+  }
+
   async getRepository(docId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories/{id}', { params: { path: { id: docId }, query: params } }));
+  }
+  async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));
   }
 }

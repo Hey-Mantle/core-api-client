@@ -27,11 +27,11 @@ export class MeetingsResource extends BaseResource {
     return this.unwrap(this.api.PUT('/meetings/{id}/attendees/{attendeeId}', { params: { path: { id: meetingId, attendeeId } }, body: data }));
   }
 
-  async transcribeGet(meetingId: string) {
+  async getTranscription(meetingId: string) {
     return this.unwrap(this.api.GET('/meetings/{id}/transcribe', { params: { path: { id: meetingId } } }));
   }
 
-  async transcribePost(meetingId: string, data: NonNullable<paths['/meetings/{id}/transcribe']['post']['requestBody']>['content']['application/json']) {
+  async transcribe(meetingId: string, data: NonNullable<paths['/meetings/{id}/transcribe']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/meetings/{id}/transcribe', { params: { path: { id: meetingId } }, body: data }));
   }
 
