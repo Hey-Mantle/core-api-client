@@ -23,6 +23,22 @@ export class TasksResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/tasks/{id}', { params: { path: { id: taskId } } }));
   }
 
+  async updateComment(taskId: string, commentId: string, data: NonNullable<paths['/tasks/{id}/comments/{commentId}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tasks/{id}/comments/{commentId}', { params: { path: { id: taskId, commentId } }, body: data }));
+  }
+
+  async deleteComment(taskId: string, commentId: string) {
+    return this.unwrap(this.api.DELETE('/tasks/{id}/comments/{commentId}', { params: { path: { id: taskId, commentId } } }));
+  }
+
+  async listComments(taskId: string) {
+    return this.unwrap(this.api.GET('/tasks/{id}/comments', { params: { path: { id: taskId } } }));
+  }
+
+  async createComment(taskId: string, data: NonNullable<paths['/tasks/{id}/comments']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tasks/{id}/comments', { params: { path: { id: taskId } }, body: data }));
+  }
+
   async getTodoItem(taskId: string, itemId: string) {
     return this.unwrap(this.api.GET('/tasks/{id}/todo-items/{itemId}', { params: { path: { id: taskId, itemId } } }));
   }

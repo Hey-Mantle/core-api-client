@@ -11,6 +11,18 @@ export class MeetingsResource extends BaseResource {
     return this.unwrap(this.api.POST('/meetings', { body: data }));
   }
 
+  async listPermissions(meetingId: string) {
+    return this.unwrap(this.api.GET('/meetings/{id}/permissions', { params: { path: { id: meetingId } } }));
+  }
+
+  async createPermission(meetingId: string, data: NonNullable<paths['/meetings/{id}/permissions']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/meetings/{id}/permissions', { params: { path: { id: meetingId } }, body: data }));
+  }
+
+  async deletePermissions(meetingId: string, data: NonNullable<paths['/meetings/{id}/permissions']['delete']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.DELETE('/meetings/{id}/permissions', { params: { path: { id: meetingId } }, body: data }));
+  }
+
   async getRecordingUrl(meetingId: string) {
     return this.unwrap(this.api.GET('/meetings/{id}/recording-url', { params: { path: { id: meetingId } } }));
   }
@@ -21,6 +33,10 @@ export class MeetingsResource extends BaseResource {
 
   async dismissTaskSuggestion(meetingId: string, suggestionId: string) {
     return this.unwrap(this.api.POST('/meetings/{id}/task-suggestions/{suggestionId}/dismiss', { params: { path: { id: meetingId, suggestionId } } }));
+  }
+
+  async updateVisibility(meetingId: string, data: NonNullable<paths['/meetings/{id}/visibility']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/meetings/{id}/visibility', { params: { path: { id: meetingId } }, body: data }));
   }
 
   async updateAttendee(meetingId: string, attendeeId: string, data: NonNullable<paths['/meetings/{id}/attendees/{attendeeId}']['put']['requestBody']>['content']['application/json']) {
