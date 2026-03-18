@@ -419,6 +419,27 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
   }`,
   },
   {
+    file: 'email-campaigns', className: 'EmailCampaignsResource',
+    clientProp: 'emailCampaigns', singularName: 'campaign',
+    pathPrefixes: ['/email/campaigns'],
+    methodOverrides: { createSend: 'send', getPreview: 'preview', createTest: 'test', createDeliver: 'deliver', createCancel: 'cancel' },
+  },
+  {
+    file: 'email-deliveries', className: 'EmailDeliveriesResource',
+    clientProp: 'emailDeliveries', singularName: 'delivery',
+    pathPrefixes: ['/email/deliveries'],
+  },
+  {
+    file: 'email-layouts', className: 'EmailLayoutsResource',
+    clientProp: 'emailLayouts', singularName: 'layout',
+    pathPrefixes: ['/email/layouts'],
+  },
+  {
+    file: 'email-senders', className: 'EmailSendersResource',
+    clientProp: 'emailSenders', singularName: 'sender',
+    pathPrefixes: ['/email/senders'],
+  },
+  {
     file: 'email-unsubscribe-groups', className: 'EmailUnsubscribeGroupsResource',
     clientProp: 'emailUnsubscribeGroups', singularName: 'group',
     pathPrefixes: ['/email/unsubscribe_groups'],
