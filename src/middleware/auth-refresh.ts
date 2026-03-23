@@ -50,19 +50,26 @@ export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middle
     maxRefreshAttempts = 1,
   } = options;
 
-  let refreshAttempts = 0;
-  let requestClone: Request | undefined;
+  const requestClones = new WeakMap<Request, { clone: Request; refreshAttempts: number }>();
 
   return {
     async onRequest({ request }) {
-      // Clone the request before it's consumed by fetch so we can retry on 401
-      requestClone = request.clone();
+      // Clone the request before it's consumed by fetch so we can retry on 401.
+      // Keyed per-request to avoid races when multiple requests are in flight.
+      requestClones.set(request, { clone: request.clone(), refreshAttempts: 0 });
       return undefined;
     },
     async onResponse({ request, response }) {
       if (response.status !== 401) return undefined;
-      if (refreshAttempts >= maxRefreshAttempts) {
-        refreshAttempts = 0;
+      let state = requestClones.get(request);
+      if (!state) {
+        // onRequest may not have been called (e.g. direct onResponse invocation);
+        // create state on-the-fly so retry still works.
+        state = { clone: request.clone(), refreshAttempts: 0 };
+        requestClones.set(request, state);
+      }
+      if (state.refreshAttempts >= maxRefreshAttempts) {
+        requestClones.delete(request);
         return undefined;
       }
 
@@ -79,16 +86,16 @@ export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middle
         // Can't parse body — proceed with refresh attempt
       }
 
-      refreshAttempts++;
+      state.refreshAttempts++;
 
       try {
         const newToken = await refreshToken();
         updateAuth(newToken);
         onRefreshSuccess?.(newToken);
-        refreshAttempts = 0;
+        requestClones.delete(request);
 
         // Retry using the cloned request (original body stream is consumed)
-        const retrySource = requestClone || request;
+        const retrySource = state.clone;
         const headers = new Headers(retrySource.headers);
         headers.set('Authorization', `Bearer ${newToken}`);
         return fetch(new Request(retrySource.url, {
@@ -98,7 +105,7 @@ export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middle
           signal: request.signal,
         }));
       } catch (refreshError) {
-        refreshAttempts = 0;
+        requestClones.delete(request);
         onRefreshFailed?.(refreshError as Error);
         return undefined;
       }
