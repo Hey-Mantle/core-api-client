@@ -16,8 +16,6 @@ export {
 
 // Middleware exports
 export {
-  createAuthRefreshMiddleware,
-  type AuthRefreshOptions,
   createRateLimitMiddleware,
   type RateLimitOptions,
 } from './middleware';
