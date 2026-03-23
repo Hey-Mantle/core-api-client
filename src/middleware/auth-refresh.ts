@@ -51,13 +51,32 @@ export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middle
   } = options;
 
   let refreshAttempts = 0;
+  let requestClone: Request | undefined;
 
   return {
+    async onRequest({ request }) {
+      // Clone the request before it's consumed by fetch so we can retry on 401
+      requestClone = request.clone();
+      return undefined;
+    },
     async onResponse({ request, response }) {
       if (response.status !== 401) return undefined;
       if (refreshAttempts >= maxRefreshAttempts) {
         refreshAttempts = 0;
         return undefined;
+      }
+
+      // Only refresh on expired tokens — not on invalid/malformed tokens
+      // where a refresh would not help. We clone the response so the
+      // original can still be read by the caller if we don't retry.
+      try {
+        const body = await response.clone().json();
+        const errorMsg = typeof body?.error === 'string' ? body.error : '';
+        if (errorMsg.startsWith('invalid_token') || errorMsg.startsWith('invalid_client')) {
+          return undefined; // Token is invalid, not expired — don't retry
+        }
+      } catch {
+        // Can't parse body — proceed with refresh attempt
       }
 
       refreshAttempts++;
@@ -68,13 +87,14 @@ export function createAuthRefreshMiddleware(options: AuthRefreshOptions): Middle
         onRefreshSuccess?.(newToken);
         refreshAttempts = 0;
 
-        // Retry the original request with the new token
-        const headers = new Headers(request.headers);
+        // Retry using the cloned request (original body stream is consumed)
+        const retrySource = requestClone || request;
+        const headers = new Headers(retrySource.headers);
         headers.set('Authorization', `Bearer ${newToken}`);
-        return fetch(new Request(request.url, {
-          method: request.method,
+        return fetch(new Request(retrySource.url, {
+          method: retrySource.method,
           headers,
-          body: request.body,
+          body: retrySource.body,
           signal: request.signal,
         }));
       } catch (refreshError) {

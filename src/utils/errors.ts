@@ -25,9 +25,13 @@ export class MantleAPIError extends Error {
  * Authentication failed (401)
  */
 export class MantleAuthenticationError extends MantleAPIError {
-  constructor(message: string = 'Authentication failed') {
+  /** Whether the token has expired (as opposed to being invalid/malformed) */
+  public readonly isExpired: boolean;
+
+  constructor(message: string = 'Authentication failed', isExpired: boolean = false) {
     super(message, 401);
     this.name = 'MantleAuthenticationError';
+    this.isExpired = isExpired;
     Object.setPrototypeOf(this, MantleAuthenticationError.prototype);
   }
 }
