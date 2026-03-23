@@ -57,7 +57,10 @@ export abstract class BaseResource {
 
     switch (response.status) {
       case 401:
-        return new MantleAuthenticationError(message);
+        return new MantleAuthenticationError(
+          message,
+          message.startsWith('token_expired')
+        );
       case 403:
         return new MantlePermissionError(message);
       case 404:

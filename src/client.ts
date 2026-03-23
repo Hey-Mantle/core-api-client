@@ -83,6 +83,9 @@ export class MantleCoreClient {
   readonly _api: Client<paths>;
   private apiKey?: string;
   private accessToken?: string;
+  private accessTokenExpiresAt?: Date;
+  private refreshAccessToken?: () => Promise<{ accessToken: string; expiresAt?: Date }>;
+  private refreshPromise?: Promise<string>;
 
   // @generated-resource-properties-start
   public readonly affiliateCommissions: AffiliateCommissionsResource;
@@ -139,6 +142,8 @@ export class MantleCoreClient {
 
     this.apiKey = config.apiKey;
     this.accessToken = config.accessToken;
+    this.accessTokenExpiresAt = config.accessTokenExpiresAt;
+    this.refreshAccessToken = config.refreshAccessToken;
 
     const timeoutMs = config.timeout ?? 30000;
 
@@ -150,14 +155,46 @@ export class MantleCoreClient {
       ...(config.fetch ? { fetch: config.fetch } : {}),
     });
 
-    // Auth middleware (always first)
+    // Auth middleware (always first) — handles preemptive refresh + setting header
     this._api.use({
-      onRequest: ({ request }) => {
+      onRequest: async ({ request }) => {
+        // Proactively refresh if we know the token is expired
+        if (this.refreshAccessToken && this.isTokenExpired()) {
+          await this.doRefresh();
+        }
         const token = this.accessToken || this.apiKey;
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`);
         }
         return request;
+      },
+      onResponse: async ({ request, response }) => {
+        if (response.status !== 401 || !this.refreshAccessToken) return undefined;
+
+        // Don't retry on invalid/malformed tokens — refresh won't help
+        try {
+          const body = await response.clone().json();
+          const errorMsg = typeof body?.error === 'string' ? body.error : '';
+          if (errorMsg.startsWith('invalid_token') || errorMsg.startsWith('invalid_client')) {
+            return undefined;
+          }
+        } catch {
+          // Can't parse body — proceed with refresh attempt
+        }
+
+        try {
+          const newToken = await this.doRefresh();
+          const headers = new Headers(request.headers);
+          headers.set('Authorization', `Bearer ${newToken}`);
+          return fetch(new Request(request.url, {
+            method: request.method,
+            headers,
+            body: request.body,
+            signal: request.signal,
+          }));
+        } catch {
+          return undefined;
+        }
       },
     });
 
@@ -247,12 +284,46 @@ export class MantleCoreClient {
   /**
    * Update authentication credentials
    */
-  updateAuth(credentials: { apiKey?: string; accessToken?: string }): void {
+  updateAuth(credentials: { apiKey?: string; accessToken?: string; accessTokenExpiresAt?: Date }): void {
     if (credentials.apiKey !== undefined) {
       this.apiKey = credentials.apiKey;
     }
     if (credentials.accessToken !== undefined) {
       this.accessToken = credentials.accessToken;
     }
+    if (credentials.accessTokenExpiresAt !== undefined) {
+      this.accessTokenExpiresAt = credentials.accessTokenExpiresAt;
+    }
+  }
+
+  /**
+   * Check if the access token is expired (with a 30-second buffer).
+   */
+  private isTokenExpired(): boolean {
+    if (!this.accessTokenExpiresAt) return false;
+    return this.accessTokenExpiresAt.getTime() - Date.now() <= 30_000;
+  }
+
+  /**
+   * Execute a token refresh, deduplicating concurrent calls.
+   * All concurrent requests will await the same in-flight refresh promise.
+   */
+  private async doRefresh(): Promise<string> {
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = (async () => {
+      try {
+        const result = await this.refreshAccessToken!();
+        this.accessToken = result.accessToken;
+        if (result.expiresAt) {
+          this.accessTokenExpiresAt = result.expiresAt;
+        }
+        return result.accessToken;
+      } finally {
+        this.refreshPromise = undefined;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 }
