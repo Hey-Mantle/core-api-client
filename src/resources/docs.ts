@@ -90,6 +90,10 @@ export class DocsResource extends BaseResource {
   async getRepository(docId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories/{id}', { params: { path: { id: docId }, query: params } }));
   }
+
+  async updateRepository(docId: string, data: NonNullable<paths['/docs/repositories/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/repositories/{id}', { params: { path: { id: docId } }, body: data }));
+  }
   async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));
   }

@@ -76,6 +76,7 @@ export type DocsPage = components['schemas']['DocsPage'];
 export type DocsPageResponse = components['schemas']['DocsPageResponse'];
 export type DocsPageSummary = components['schemas']['DocsPageSummary'];
 export type DocsRepository = components['schemas']['DocsRepository'];
+export type DocsRepositoryResponse = components['schemas']['DocsRepositoryResponse'];
 export type EmailCampaign = components['schemas']['EmailCampaign'];
 export type EmailDelivery = components['schemas']['EmailDelivery'];
 export type EmailDeliveryStats = components['schemas']['EmailDeliveryStats'];
