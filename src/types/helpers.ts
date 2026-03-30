@@ -129,6 +129,7 @@ export type Review = components['schemas']['Review'];
 export type ReviewWebhook = components['schemas']['ReviewWebhook'];
 export type StandardMetricResponse = components['schemas']['StandardMetricResponse'];
 export type Subscription = components['schemas']['Subscription'];
+export type SubscriptionChurnResponse = components['schemas']['SubscriptionChurnResponse'];
 export type SubscriptionWebhook = components['schemas']['SubscriptionWebhook'];
 export type SyncedEmail = components['schemas']['SyncedEmail'];
 export type SyncedEmailContact = components['schemas']['SyncedEmailContact'];

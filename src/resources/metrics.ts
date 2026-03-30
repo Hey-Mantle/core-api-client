@@ -59,6 +59,10 @@ export class MetricsResource extends BaseResource {
     return this.unwrap(this.api.GET('/api/core/v1/metrics/revenueRetention', { params: { query: params } }));
   }
 
+  async subscriptionChurn(params?: paths['/api/core/v1/metrics/subscriptionChurn']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/api/core/v1/metrics/subscriptionChurn', { params: { query: params } }));
+  }
+
   async usageEvent(params: paths['/api/core/v1/metrics/usageEvent']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/api/core/v1/metrics/usageEvent', { params: { query: params } }));
   }
