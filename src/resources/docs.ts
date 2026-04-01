@@ -55,6 +55,22 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/docs/pages/{page_id}/publish', { params: { path: { page_id: pageId } } }));
   }
 
+  async updateRedirect(docId: string, redirectId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects/{redirect_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/repositories/{id}/redirects/{redirect_id}', { params: { path: { id: docId, redirect_id: redirectId } }, body: data }));
+  }
+
+  async deleteRedirect(docId: string, redirectId: string) {
+    return this.unwrap(this.api.DELETE('/docs/repositories/{id}/redirects/{redirect_id}', { params: { path: { id: docId, redirect_id: redirectId } } }));
+  }
+
+  async listRedirects(docId: string) {
+    return this.unwrap(this.api.GET('/docs/repositories/{id}/redirects', { params: { path: { id: docId } } }));
+  }
+
+  async createRedirect(docId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/repositories/{id}/redirects', { params: { path: { id: docId } }, body: data }));
+  }
+
   async updateCollection(collectionId: string, data: NonNullable<paths['/docs/collections/{collection_id}']['put']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.PUT('/docs/collections/{collection_id}', { params: { path: { collection_id: collectionId } }, body: data }));
   }
