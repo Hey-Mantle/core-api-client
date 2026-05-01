@@ -31,14 +31,6 @@ export class FlowExtensionsResource extends BaseResource {
     return this.unwrap(this.api.POST('/flow/extensions/triggers/{handle}/fire', { params: { path: { handle } }, body: data }));
   }
 
-  async updateAction(extensionId: string, data: NonNullable<paths['/flow/extensions/actions/{id}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/flow/extensions/actions/{id}', { params: { path: { id: extensionId } }, body: data }));
-  }
-
-  async deleteAction(extensionId: string) {
-    return this.unwrap(this.api.DELETE('/flow/extensions/actions/{id}', { params: { path: { id: extensionId } } }));
-  }
-
   async getTrigger(handle: string) {
     return this.unwrap(this.api.GET('/flow/extensions/triggers/{handle}', { params: { path: { handle } } }));
   }
@@ -53,5 +45,13 @@ export class FlowExtensionsResource extends BaseResource {
 
   async deleteTrigger(handle: string) {
     return this.unwrap(this.api.DELETE('/flow/extensions/triggers/{handle}', { params: { path: { handle } } }));
+  }
+
+  async updateAction(extensionId: string, data: NonNullable<paths['/flow/extensions/actions/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/flow/extensions/actions/{id}', { params: { path: { id: extensionId } }, body: data }));
+  }
+
+  async deleteAction(extensionId: string) {
+    return this.unwrap(this.api.DELETE('/flow/extensions/actions/{id}', { params: { path: { id: extensionId } } }));
   }
 }

@@ -11,14 +11,6 @@ export class SyncedEmailsResource extends BaseResource {
     return this.unwrap(this.api.POST('/synced_emails', { body: data }));
   }
 
-  async listMessages(syncedEmailId: string) {
-    return this.unwrap(this.api.GET('/synced_emails/{id}/messages', { params: { path: { id: syncedEmailId } } }));
-  }
-
-  async createMessage(syncedEmailId: string, data: NonNullable<paths['/synced_emails/{id}/messages']['post']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.POST('/synced_emails/{id}/messages', { params: { path: { id: syncedEmailId } }, body: data }));
-  }
-
   async get(syncedEmailId: string) {
     return this.unwrap(this.api.GET('/synced_emails/{id}', { params: { path: { id: syncedEmailId } } }));
   }
@@ -29,5 +21,13 @@ export class SyncedEmailsResource extends BaseResource {
 
   async del(syncedEmailId: string) {
     return this.unwrap(this.api.DELETE('/synced_emails/{id}', { params: { path: { id: syncedEmailId } } }));
+  }
+
+  async listMessages(syncedEmailId: string) {
+    return this.unwrap(this.api.GET('/synced_emails/{id}/messages', { params: { path: { id: syncedEmailId } } }));
+  }
+
+  async createMessage(syncedEmailId: string, data: NonNullable<paths['/synced_emails/{id}/messages']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/synced_emails/{id}/messages', { params: { path: { id: syncedEmailId } }, body: data }));
   }
 }

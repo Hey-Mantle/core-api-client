@@ -35,8 +35,16 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.POST('/docs/pages', { body: data }));
   }
 
-  async listRepositories(params?: paths['/docs/repositories']['get']['parameters']['query']) {
+  async listRepositoriesGet(params?: paths['/docs/repositories']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories', { params: { query: params } }));
+  }
+
+  async listSites(params?: paths['/docs/sites']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/sites', { params: { query: params } }));
+  }
+
+  async createSite(data: NonNullable<paths['/docs/sites']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/sites', { body: data }));
   }
 
   async archivePage(pageId: string) {
@@ -47,6 +55,18 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/docs/pages/{page_id}/archive', { params: { path: { page_id: pageId } } }));
   }
 
+  async getPage(pageId: string, params?: paths['/docs/pages/{page_id}']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/pages/{page_id}', { params: { path: { page_id: pageId }, query: params } }));
+  }
+
+  async updatePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/pages/{page_id}', { params: { path: { page_id: pageId } }, body: data }));
+  }
+
+  async deletePage(pageId: string) {
+    return this.unwrap(this.api.DELETE('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
+  }
+
   async publishPage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/publish']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/pages/{page_id}/publish', { params: { path: { page_id: pageId } }, body: data }));
   }
@@ -55,19 +75,43 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/docs/pages/{page_id}/publish', { params: { path: { page_id: pageId } } }));
   }
 
-  async updateRedirect(docId: string, redirectId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects/{redirect_id}']['put']['requestBody']>['content']['application/json']) {
+  async getSite(docId: string, params?: paths['/docs/sites/{id}']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/docs/sites/{id}', { params: { path: { id: docId }, query: params } }));
+  }
+
+  async updateSite(docId: string, data: NonNullable<paths['/docs/sites/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/sites/{id}', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async deleteSite(docId: string) {
+    return this.unwrap(this.api.DELETE('/docs/sites/{id}', { params: { path: { id: docId } } }));
+  }
+
+  async createRepository(docId: string, data: NonNullable<paths['/docs/sites/{id}/repositories']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/sites/{id}/repositories', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async updateRepositoryPut(docId: string, data: NonNullable<paths['/docs/sites/{id}/repositories']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/sites/{id}/repositories', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async deleteRepositories(docId: string, data: NonNullable<paths['/docs/sites/{id}/repositories']['delete']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.DELETE('/docs/sites/{id}/repositories', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async updateRedirectPut(docId: string, redirectId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects/{redirect_id}']['put']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.PUT('/docs/repositories/{id}/redirects/{redirect_id}', { params: { path: { id: docId, redirect_id: redirectId } }, body: data }));
   }
 
-  async deleteRedirect(docId: string, redirectId: string) {
+  async deleteRedirectDelete(docId: string, redirectId: string) {
     return this.unwrap(this.api.DELETE('/docs/repositories/{id}/redirects/{redirect_id}', { params: { path: { id: docId, redirect_id: redirectId } } }));
   }
 
-  async listRedirects(docId: string) {
+  async listRedirectsGet(docId: string) {
     return this.unwrap(this.api.GET('/docs/repositories/{id}/redirects', { params: { path: { id: docId } } }));
   }
 
-  async createRedirect(docId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects']['post']['requestBody']>['content']['application/json']) {
+  async createRedirectPost(docId: string, data: NonNullable<paths['/docs/repositories/{id}/redirects']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/repositories/{id}/redirects', { params: { path: { id: docId } }, body: data }));
   }
 
@@ -87,28 +131,12 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.DELETE('/docs/groups/{group_id}', { params: { path: { group_id: groupId } } }));
   }
 
-  async getPage(pageId: string, params?: paths['/docs/pages/{page_id}']['get']['parameters']['query']) {
-    return this.unwrap(this.api.GET('/docs/pages/{page_id}', { params: { path: { page_id: pageId }, query: params } }));
-  }
-
-  async updatePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/docs/pages/{page_id}', { params: { path: { page_id: pageId } }, body: data }));
-  }
-
-  async deletePage(pageId: string) {
-    return this.unwrap(this.api.DELETE('/docs/pages/{page_id}', { params: { path: { page_id: pageId } } }));
-  }
-
   async getStatus(jobKey: string) {
     return this.unwrap(this.api.GET('/docs/pages/generate/status/{jobKey}', { params: { path: { jobKey } } }));
   }
 
   async getRepository(docId: string, params?: paths['/docs/repositories/{id}']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/repositories/{id}', { params: { path: { id: docId }, query: params } }));
-  }
-
-  async updateRepository(docId: string, data: NonNullable<paths['/docs/repositories/{id}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/docs/repositories/{id}', { params: { path: { id: docId } }, body: data }));
   }
   async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));

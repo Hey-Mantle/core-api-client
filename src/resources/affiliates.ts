@@ -7,7 +7,15 @@ export class AffiliatesResource extends BaseResource {
     return this.unwrap(this.api.GET('/affiliates', { params: { query: params } }));
   }
 
+  async addTags(affiliateId: string, data: NonNullable<paths['/affiliates/{id}/addTags']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/affiliates/{id}/addTags', { params: { path: { id: affiliateId } }, body: data }));
+  }
+
   async get(affiliateId: string) {
     return this.unwrap(this.api.GET('/affiliates/{id}', { params: { path: { id: affiliateId } } }));
+  }
+
+  async removeTags(affiliateId: string, data: NonNullable<paths['/affiliates/{id}/removeTags']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/affiliates/{id}/removeTags', { params: { path: { id: affiliateId } }, body: data }));
   }
 }

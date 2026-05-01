@@ -11,6 +11,18 @@ export class MeetingsResource extends BaseResource {
     return this.unwrap(this.api.POST('/meetings', { body: data }));
   }
 
+  async get(meetingId: string) {
+    return this.unwrap(this.api.GET('/meetings/{id}', { params: { path: { id: meetingId } } }));
+  }
+
+  async update(meetingId: string, data: NonNullable<paths['/meetings/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/meetings/{id}', { params: { path: { id: meetingId } }, body: data }));
+  }
+
+  async del(meetingId: string) {
+    return this.unwrap(this.api.DELETE('/meetings/{id}', { params: { path: { id: meetingId } } }));
+  }
+
   async listPermissions(meetingId: string) {
     return this.unwrap(this.api.GET('/meetings/{id}/permissions', { params: { path: { id: meetingId } } }));
   }
@@ -39,8 +51,8 @@ export class MeetingsResource extends BaseResource {
     return this.unwrap(this.api.PUT('/meetings/{id}/visibility', { params: { path: { id: meetingId } }, body: data }));
   }
 
-  async updateAttendee(meetingId: string, attendeeId: string, data: NonNullable<paths['/meetings/{id}/attendees/{attendeeId}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/meetings/{id}/attendees/{attendeeId}', { params: { path: { id: meetingId, attendeeId } }, body: data }));
+  async updateAttendee(meetingId: string, attendeeId: string, data: NonNullable<paths['/meetings/{id}/attendees/{attendeeId}']['put']['requestBody']>['content']['application/json'], params?: paths['/meetings/{id}/attendees/{attendeeId}']['put']['parameters']['query']) {
+    return this.unwrap(this.api.PUT('/meetings/{id}/attendees/{attendeeId}', { params: { path: { id: meetingId, attendeeId }, query: params }, body: data }));
   }
 
   async getTranscription(meetingId: string) {
@@ -53,17 +65,5 @@ export class MeetingsResource extends BaseResource {
 
   async transcribeUpload(meetingId: string, data?: NonNullable<paths['/meetings/{id}/transcribe/upload']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/meetings/{id}/transcribe/upload', { params: { path: { id: meetingId } }, body: data }));
-  }
-
-  async get(meetingId: string) {
-    return this.unwrap(this.api.GET('/meetings/{id}', { params: { path: { id: meetingId } } }));
-  }
-
-  async update(meetingId: string, data: NonNullable<paths['/meetings/{id}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/meetings/{id}', { params: { path: { id: meetingId } }, body: data }));
-  }
-
-  async del(meetingId: string) {
-    return this.unwrap(this.api.DELETE('/meetings/{id}', { params: { path: { id: meetingId } } }));
   }
 }

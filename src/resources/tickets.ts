@@ -11,6 +11,22 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.POST('/tickets', { body: data }));
   }
 
+  async listSavedFilters() {
+    return this.unwrap(this.api.GET('/tickets/saved_filters'));
+  }
+
+  async createSavedFilter(data: NonNullable<paths['/tickets/saved_filters']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets/saved_filters', { body: data }));
+  }
+
+  async listSavedReplies(params?: paths['/tickets/saved_replies']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/tickets/saved_replies', { params: { query: params } }));
+  }
+
+  async createSavedReply(data: NonNullable<paths['/tickets/saved_replies']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets/saved_replies', { body: data }));
+  }
+
   async listEvents(ticketId: string, params?: paths['/tickets/{id}/events']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/tickets/{id}/events', { params: { path: { id: ticketId }, query: params } }));
   }
@@ -21,6 +37,14 @@ export class TicketsResource extends BaseResource {
 
   async updateEvent(ticketId: string, data: NonNullable<paths['/tickets/{id}/events']['put']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.PUT('/tickets/{id}/events', { params: { path: { id: ticketId } }, body: data }));
+  }
+
+  async get(ticketId: string) {
+    return this.unwrap(this.api.GET('/tickets/{id}', { params: { path: { id: ticketId } } }));
+  }
+
+  async update(ticketId: string, data: NonNullable<paths['/tickets/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tickets/{id}', { params: { path: { id: ticketId } }, body: data }));
   }
 
   async getLoop(ticketId: string, loopId: string) {
@@ -47,11 +71,27 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.PUT('/tickets/{id}/messages', { params: { path: { id: ticketId } }, body: data }));
   }
 
-  async get(ticketId: string) {
-    return this.unwrap(this.api.GET('/tickets/{id}', { params: { path: { id: ticketId } } }));
+  async getSavedFilter(filterId: string) {
+    return this.unwrap(this.api.GET('/tickets/saved_filters/{filter_id}', { params: { path: { filter_id: filterId } } }));
   }
 
-  async update(ticketId: string, data: NonNullable<paths['/tickets/{id}']['put']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.PUT('/tickets/{id}', { params: { path: { id: ticketId } }, body: data }));
+  async updateSavedFilter(filterId: string, data: NonNullable<paths['/tickets/saved_filters/{filter_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tickets/saved_filters/{filter_id}', { params: { path: { filter_id: filterId } }, body: data }));
+  }
+
+  async deleteSavedFilter(filterId: string) {
+    return this.unwrap(this.api.DELETE('/tickets/saved_filters/{filter_id}', { params: { path: { filter_id: filterId } } }));
+  }
+
+  async getSavedReply(replyId: string) {
+    return this.unwrap(this.api.GET('/tickets/saved_replies/{reply_id}', { params: { path: { reply_id: replyId } } }));
+  }
+
+  async updateSavedReply(replyId: string, data: NonNullable<paths['/tickets/saved_replies/{reply_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/tickets/saved_replies/{reply_id}', { params: { path: { reply_id: replyId } }, body: data }));
+  }
+
+  async deleteSavedReply(replyId: string) {
+    return this.unwrap(this.api.DELETE('/tickets/saved_replies/{reply_id}', { params: { path: { reply_id: replyId } } }));
   }
 }

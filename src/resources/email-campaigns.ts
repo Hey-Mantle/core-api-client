@@ -19,18 +19,6 @@ export class EmailCampaignsResource extends BaseResource {
     return this.unwrap(this.api.POST('/email/campaigns/{id}/deliver', { params: { path: { id: campaignId } }, body: data }));
   }
 
-  async preview(campaignId: string, params?: paths['/email/campaigns/{id}/preview']['get']['parameters']['query']) {
-    return this.unwrap(this.api.GET('/email/campaigns/{id}/preview', { params: { path: { id: campaignId }, query: params } }));
-  }
-
-  async send(campaignId: string, data: NonNullable<paths['/email/campaigns/{id}/send']['post']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.POST('/email/campaigns/{id}/send', { params: { path: { id: campaignId } }, body: data }));
-  }
-
-  async test(campaignId: string, data: NonNullable<paths['/email/campaigns/{id}/test']['post']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.POST('/email/campaigns/{id}/test', { params: { path: { id: campaignId } }, body: data }));
-  }
-
   async get(campaignId: string) {
     return this.unwrap(this.api.GET('/email/campaigns/{id}', { params: { path: { id: campaignId } } }));
   }
@@ -41,5 +29,17 @@ export class EmailCampaignsResource extends BaseResource {
 
   async del(campaignId: string) {
     return this.unwrap(this.api.DELETE('/email/campaigns/{id}', { params: { path: { id: campaignId } } }));
+  }
+
+  async preview(campaignId: string, params?: paths['/email/campaigns/{id}/preview']['get']['parameters']['query']) {
+    return this.unwrap(this.api.GET('/email/campaigns/{id}/preview', { params: { path: { id: campaignId }, query: params } }));
+  }
+
+  async send(campaignId: string, data: NonNullable<paths['/email/campaigns/{id}/send']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/email/campaigns/{id}/send', { params: { path: { id: campaignId } }, body: data }));
+  }
+
+  async test(campaignId: string, data: NonNullable<paths['/email/campaigns/{id}/test']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/email/campaigns/{id}/test', { params: { path: { id: campaignId } }, body: data }));
   }
 }

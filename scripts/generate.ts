@@ -322,13 +322,13 @@ function generateMethod(
   const { hasQuery, queryRequired } = getQueryInfo(spec, pathStr, httpMethod);
   const { hasBody, bodyRequired } = getBodyInfo(spec, pathStr, httpMethod);
 
-  // Build argument list
+  // Build argument list. When the body is required but the query is optional,
+  // emit body first to satisfy TS rule "required parameter cannot follow optional".
   const args: string[] = pathParams.map((p) => `${p.paramName}: string`);
 
   let queryType = "";
   if (hasQuery) {
     queryType = `paths['${pathStr}']['${httpMethod}']['parameters']['query']`;
-    args.push(`params${queryRequired ? "" : "?"}: ${queryType}`);
   }
 
   let bodyTypeStr = "";
@@ -337,7 +337,15 @@ function generateMethod(
     // Always use NonNullable<> — openapi-typescript may generate requestBody as optional
     // even when the spec marks it required, so this is the safe universal form.
     bodyTypeStr = `NonNullable<${rb}>['content']['application/json']`;
-    args.push(`data${bodyRequired ? "" : "?"}: ${bodyTypeStr}`);
+  }
+
+  const bodyOptionalAfterQuery = hasQuery && hasBody && !queryRequired && bodyRequired;
+  if (bodyOptionalAfterQuery) {
+    args.push(`data: ${bodyTypeStr}`);
+    args.push(`params?: ${queryType}`);
+  } else {
+    if (hasQuery) args.push(`params${queryRequired ? "" : "?"}: ${queryType}`);
+    if (hasBody) args.push(`data${bodyRequired ? "" : "?"}: ${bodyTypeStr}`);
   }
 
   // Build API call
@@ -990,15 +998,29 @@ function validateSpecCoverage(spec: Record<string, unknown>): void {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-async function main() {
-  // ── 1. Fetch spec ─────────────────────────────────────────────────────────
-  console.log("Fetching OpenAPI spec from", SPEC_URL);
-  const response = await fetch(SPEC_URL);
+async function loadSpec(source: string): Promise<Record<string, unknown>> {
+  // Local file path or file:// URL — read directly. fetch() in Node 22 still
+  // does not support the file: scheme, so we branch.
+  const isHttp = /^https?:\/\//i.test(source);
+  if (!isHttp) {
+    const filePath = source.startsWith("file://")
+      ? fileURLToPath(source)
+      : path.resolve(source);
+    const text = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(text) as Record<string, unknown>;
+  }
+  const response = await fetch(source);
   if (!response.ok)
     throw new Error(
       `Failed to fetch spec: ${response.status} ${response.statusText}`,
     );
-  const spec = (await response.json()) as Record<string, unknown>;
+  return (await response.json()) as Record<string, unknown>;
+}
+
+async function main() {
+  // ── 1. Fetch spec ─────────────────────────────────────────────────────────
+  console.log("Fetching OpenAPI spec from", SPEC_URL);
+  const spec = await loadSpec(SPEC_URL);
 
   // ── 1a. Validate every spec path is covered by a resource group ───────────
   console.log("Validating spec coverage…");
