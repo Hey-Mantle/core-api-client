@@ -8,6 +8,7 @@ export { AffiliatesResource } from './affiliates';
 export { AiAgentRunsResource } from './ai-agent-runs';
 export { AppsResource } from './apps';
 export { AssistantResource } from './assistant';
+export { AttachmentsResource } from './attachments';
 export { ChannelsResource } from './channels';
 export { ChargesResource } from './charges';
 export { CompaniesResource } from './companies';

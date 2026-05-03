@@ -53,6 +53,7 @@ export {
   MeResource,
   OrganizationResource,
   AgentsResource,
+  AttachmentsResource,
   DocsResource,
   EntitiesResource,
   CustomDataResource,

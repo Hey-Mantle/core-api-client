@@ -3,12 +3,12 @@ import { BaseResource } from './base';
 import type { paths, components } from '../generated/api';
 
 export class AiAgentRunsResource extends BaseResource {
-  async create(agentId: string, data: NonNullable<paths['/ai/agents/{agentId}/runs']['post']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.POST('/ai/agents/{agentId}/runs', { params: { path: { agentId } }, body: data }));
-  }
-
   async get(agentId: string, runId: string) {
     return this.unwrap(this.api.GET('/ai/agents/{agentId}/runs/{runId}', { params: { path: { agentId, runId } } }));
+  }
+
+  async create(agentId: string, data: NonNullable<paths['/ai/agents/{agentId}/runs']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/ai/agents/{agentId}/runs', { params: { path: { agentId } }, body: data }));
   }
   /**
    * Create an agent run and poll until it reaches a terminal status.

@@ -23,10 +23,6 @@ export class DocsResource extends BaseResource {
     return this.unwrap(this.api.POST('/docs/groups', { body: data }));
   }
 
-  async generatePage(data: NonNullable<paths['/docs/pages/generate']['post']['requestBody']>['content']['application/json']) {
-    return this.unwrap(this.api.POST('/docs/pages/generate', { body: data }));
-  }
-
   async listPages(params?: paths['/docs/pages']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/docs/pages', { params: { query: params } }));
   }
@@ -45,6 +41,10 @@ export class DocsResource extends BaseResource {
 
   async createSite(data: NonNullable<paths['/docs/sites']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/sites', { body: data }));
+  }
+
+  async generatePage(data: NonNullable<paths['/docs/pages/generate']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/pages/generate', { body: data }));
   }
 
   async archivePage(pageId: string) {

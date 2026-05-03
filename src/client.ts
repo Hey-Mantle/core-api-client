@@ -22,6 +22,7 @@ import { AffiliatesResource } from './resources/affiliates';
 import { AiAgentRunsResource } from './resources/ai-agent-runs';
 import { AppsResource } from './resources/apps';
 import { AssistantResource } from './resources/assistant';
+import { AttachmentsResource } from './resources/attachments';
 import { ChannelsResource } from './resources/channels';
 import { ChargesResource } from './resources/charges';
 import { CompaniesResource } from './resources/companies';
@@ -93,6 +94,7 @@ export class MantleCoreClient {
   public readonly aiAgentRuns: AiAgentRunsResource;
   public readonly apps: AppsResource;
   public readonly assistant: AssistantResource;
+  public readonly attachments: AttachmentsResource;
   public readonly channels: ChannelsResource;
   public readonly charges: ChargesResource;
   public readonly companies: CompaniesResource;
@@ -190,6 +192,7 @@ export class MantleCoreClient {
     this.aiAgentRuns = new AiAgentRunsResource(this);
     this.apps = new AppsResource(this);
     this.assistant = new AssistantResource(this);
+    this.attachments = new AttachmentsResource(this);
     this.channels = new ChannelsResource(this);
     this.charges = new ChargesResource(this);
     this.companies = new CompaniesResource(this);

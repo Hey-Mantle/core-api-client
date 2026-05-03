@@ -488,6 +488,59 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     pathPrefixes: ["/assistant"],
   },
   {
+    file: "attachments",
+    className: "AttachmentsResource",
+    clientProp: "attachments",
+    singularName: "attachment",
+    pathPrefixes: ["/attachments"],
+    // The factory endpoint (POST /attachments) is auto-generated as `create()`.
+    // `upload()` is a hand-written convenience that performs the full two-step
+    // upload (mint URL → PUT bytes) and returns the attachments[] entry shape
+    // accepted by tickets.createMessage and timelineComments.create. It has to
+    // live here (not in spec) because the PUT bypasses openapi-fetch's
+    // JSON-only transport and uses the global fetch directly.
+    customMethods: `
+  async upload(
+    file: {
+      uri?: string;
+      blob?: Blob;
+      name: string;
+      contentType: string;
+      sizeBytes?: number;
+    },
+  ): Promise<{
+    url: string;
+    name: string;
+    contentType: string;
+    sizeBytes: number;
+  }> {
+    if (!file.uri && !file.blob) {
+      throw new Error('AttachmentsResource.upload: either \`uri\` or \`blob\` is required');
+    }
+    const blob = file.blob ?? (await (await fetch(file.uri!)).blob());
+    const created = await this.create({
+      filename: file.name,
+      contentType: file.contentType,
+    });
+    const putRes = await fetch(created.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.contentType },
+      body: blob,
+    });
+    if (!putRes.ok) {
+      throw new Error(
+        \`AttachmentsResource.upload: PUT to signed URL failed with status \${putRes.status}\`,
+      );
+    }
+    return {
+      url: created.downloadUrl,
+      name: file.name,
+      contentType: file.contentType,
+      sizeBytes: file.sizeBytes ?? blob.size,
+    };
+  }`,
+  },
+  {
     file: "channels",
     className: "ChannelsResource",
     clientProp: "channels",
