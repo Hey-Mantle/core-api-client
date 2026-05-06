@@ -33,6 +33,7 @@ import { CustomersResource } from './resources/customers';
 import { DealActivitiesResource } from './resources/deal-activities';
 import { DealFlowsResource } from './resources/deal-flows';
 import { DealsResource } from './resources/deals';
+import { DevicesResource } from './resources/devices';
 import { DocsResource } from './resources/docs';
 import { EmailCampaignsResource } from './resources/email-campaigns';
 import { EmailDeliveriesResource } from './resources/email-deliveries';
@@ -47,6 +48,7 @@ import { ListsResource } from './resources/lists';
 import { MeetingsResource } from './resources/meetings';
 import { MeResource } from './resources/me';
 import { MetricsResource } from './resources/metrics';
+import { NotificationPreferencesResource } from './resources/notification-preferences';
 import { OrganizationResource } from './resources/organization';
 import { SubscriptionsResource } from './resources/subscriptions';
 import { SyncedEmailsResource } from './resources/synced-emails';
@@ -105,6 +107,7 @@ export class MantleCoreClient {
   public readonly dealActivities: DealActivitiesResource;
   public readonly dealFlows: DealFlowsResource;
   public readonly deals: DealsResource;
+  public readonly devices: DevicesResource;
   public readonly docs: DocsResource;
   public readonly emailCampaigns: EmailCampaignsResource;
   public readonly emailDeliveries: EmailDeliveriesResource;
@@ -119,6 +122,7 @@ export class MantleCoreClient {
   public readonly meetings: MeetingsResource;
   public readonly me: MeResource;
   public readonly metrics: MetricsResource;
+  public readonly notificationPreferences: NotificationPreferencesResource;
   public readonly organization: OrganizationResource;
   public readonly subscriptions: SubscriptionsResource;
   public readonly syncedEmails: SyncedEmailsResource;
@@ -203,6 +207,7 @@ export class MantleCoreClient {
     this.dealActivities = new DealActivitiesResource(this);
     this.dealFlows = new DealFlowsResource(this);
     this.deals = new DealsResource(this);
+    this.devices = new DevicesResource(this);
     this.docs = new DocsResource(this);
     this.emailCampaigns = new EmailCampaignsResource(this);
     this.emailDeliveries = new EmailDeliveriesResource(this);
@@ -217,6 +222,7 @@ export class MantleCoreClient {
     this.meetings = new MeetingsResource(this);
     this.me = new MeResource(this);
     this.metrics = new MetricsResource(this);
+    this.notificationPreferences = new NotificationPreferencesResource(this);
     this.organization = new OrganizationResource(this);
     this.subscriptions = new SubscriptionsResource(this);
     this.syncedEmails = new SyncedEmailsResource(this);

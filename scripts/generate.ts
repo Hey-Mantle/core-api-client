@@ -613,6 +613,13 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     pathPrefixes: ["/deals"],
   },
   {
+    file: "devices",
+    className: "DevicesResource",
+    clientProp: "devices",
+    singularName: "device",
+    pathPrefixes: ["/devices"],
+  },
+  {
     file: "docs",
     className: "DocsResource",
     clientProp: "docs",
@@ -735,6 +742,15 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     singularName: "metric",
     pathPrefixes: ["/api/core/v1/metrics", "/metrics"],
     methodNaming: "last-segment",
+  },
+  {
+    file: "notification-preferences",
+    className: "NotificationPreferencesResource",
+    clientProp: "notificationPreferences",
+    singularName: "preference",
+    pathPrefixes: ["/notification_preferences"],
+    // Singleton: GET reads, PUT updates — algorithm defaults of list/create don't apply
+    methodOverrides: { list: "get", create: "update" },
   },
   {
     file: "organization",
