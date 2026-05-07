@@ -141,4 +141,28 @@ export class DocsResource extends BaseResource {
   async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));
   }
+
+  async updateRepository(docId: string, data: NonNullable<paths['/docs/repositories/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/repositories/{id}', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async listSiteRepositories(siteId: string) {
+    return this.unwrap(this.api.GET('/docs/sites/{id}/repositories', { params: { path: { id: siteId } } }));
+  }
+
+  async listSiteRedirects(siteId: string) {
+    return this.unwrap(this.api.GET('/docs/sites/{id}/redirects', { params: { path: { id: siteId } } }));
+  }
+
+  async createSiteRedirects(siteId: string, data: NonNullable<paths['/docs/sites/{id}/redirects']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/sites/{id}/redirects', { params: { path: { id: siteId } }, body: data }));
+  }
+
+  async updateSiteRedirect(siteId: string, redirectId: string, data: NonNullable<paths['/docs/sites/{id}/redirects/{redirect_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/sites/{id}/redirects/{redirect_id}', { params: { path: { id: siteId, redirect_id: redirectId } }, body: data }));
+  }
+
+  async deleteSiteRedirect(siteId: string, redirectId: string) {
+    return this.unwrap(this.api.DELETE('/docs/sites/{id}/redirects/{redirect_id}', { params: { path: { id: siteId, redirect_id: redirectId } } }));
+  }
 }
