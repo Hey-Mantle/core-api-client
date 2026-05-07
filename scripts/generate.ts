@@ -635,17 +635,17 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     singularName: "doc",
     pathPrefixes: ["/docs"],
     // Two POST /pages/generate endpoints would collide on `generatePage`. The
-    // per-page one is exposed via the customMethod `regeneratePage` below, so
-    // skip it here and keep the collection-level one as `generatePage`.
+    // per-page one is exposed via the customMethod `regeneratePage` below and
+    // skipped via `skipPaths`, leaving the collection-level one to take the
+    // name `generatePage` naturally (no override needed).
     //
-    // The other overrides preserve the legacy HTTP-suffixed names that
+    // The overrides below preserve the legacy HTTP-suffixed names that
     // existed when the repo-scoped and site-scoped paths collided. Now that
     // the site-scoped variants are handled in customMethods and the
     // collisions are skipped via `skipPaths`, the auto-gen would produce
     // shorter (un-suffixed) names — but downstream consumers still call the
     // suffixed versions, so we keep them explicitly.
     methodOverrides: {
-      generatePagePost: "generatePage",
       listRepositories: "listRepositoriesGet",
       updateRepository: "updateRepositoryPut",
       listRedirects: "listRedirectsGet",
