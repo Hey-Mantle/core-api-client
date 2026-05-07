@@ -402,6 +402,15 @@ interface ResourceGroup {
   methodOverrides?: Record<string, string>;
   /** verbatim extra methods appended inside the class */
   customMethods?: string;
+  /** Specific (method, path) entries to exclude from auto-generation, formatted as
+   *  "POST /docs/pages/{page_id}/generate". Use when a path is intentionally
+   *  replaced by a hand-written customMethods entry (and would otherwise collide
+   *  with another auto-generated method of the same name). */
+  skipPaths?: string[];
+  /** Method names where two paths produce the same name and we knowingly accept
+   *  that the second one is silently dropped. Each entry should reference a tracked
+   *  bug to fix. Prefer skipPaths + a customMethods replacement instead. */
+  knownSilentCollisions?: string[];
 }
 
 const RESOURCE_GROUPS: ResourceGroup[] = [
@@ -625,11 +634,70 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     clientProp: "docs",
     singularName: "doc",
     pathPrefixes: ["/docs"],
-    // Two POST /pages/generate endpoints collide — the collection-level one gets deduped
-    methodOverrides: { generatePagePost: "generatePage" },
+    // Two POST /pages/generate endpoints would collide on `generatePage`. The
+    // per-page one is exposed via the customMethod `regeneratePage` below, so
+    // skip it here and keep the collection-level one as `generatePage`.
+    //
+    // The other overrides preserve the legacy HTTP-suffixed names that
+    // existed when the repo-scoped and site-scoped paths collided. Now that
+    // the site-scoped variants are handled in customMethods and the
+    // collisions are skipped via `skipPaths`, the auto-gen would produce
+    // shorter (un-suffixed) names — but downstream consumers still call the
+    // suffixed versions, so we keep them explicitly.
+    methodOverrides: {
+      generatePagePost: "generatePage",
+      listRepositories: "listRepositoriesGet",
+      updateRepository: "updateRepositoryPut",
+      listRedirects: "listRedirectsGet",
+      createRedirect: "createRedirectPost",
+      updateRedirect: "updateRedirectPut",
+      deleteRedirect: "deleteRedirectDelete",
+    },
+    // Site-scoped GETs collide on `listRepositoriesGet` and `listRedirectsGet`
+    // with the older repo-scoped GETs. Customs below replace them as
+    // listSiteRepositories / listSiteRedirects.
+    skipPaths: [
+      "POST /docs/pages/{page_id}/generate",
+      "PUT /docs/repositories/{id}",
+      "GET /docs/sites/{id}/repositories",
+      "GET /docs/sites/{id}/redirects",
+      "POST /docs/sites/{id}/redirects",
+      "PUT /docs/sites/{id}/redirects/{redirect_id}",
+      "DELETE /docs/sites/{id}/redirects/{redirect_id}",
+    ],
+    // Site-scoped redirect methods are hand-written: their auto-generated names
+    // collide with the deprecated repo-scoped equivalents (both produce
+    // `listRedirectsGet`/`createRedirectPost` after dedup), so the generator
+    // would silently skip them. Until the dedup algorithm distinguishes parent
+    // path context (e.g. listSiteRedirects vs listRepositoryRedirects), keep
+    // these here. The repo-scoped versions are deprecated server-side.
     customMethods: `
   async regeneratePage(pageId: string, data: NonNullable<paths['/docs/pages/{page_id}/generate']['post']['requestBody']>['content']['application/json']) {
     return this.unwrap(this.api.POST('/docs/pages/{page_id}/generate', { params: { path: { page_id: pageId } }, body: data }));
+  }
+
+  async updateRepository(docId: string, data: NonNullable<paths['/docs/repositories/{id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/repositories/{id}', { params: { path: { id: docId } }, body: data }));
+  }
+
+  async listSiteRepositories(siteId: string) {
+    return this.unwrap(this.api.GET('/docs/sites/{id}/repositories', { params: { path: { id: siteId } } }));
+  }
+
+  async listSiteRedirects(siteId: string) {
+    return this.unwrap(this.api.GET('/docs/sites/{id}/redirects', { params: { path: { id: siteId } } }));
+  }
+
+  async createSiteRedirects(siteId: string, data: NonNullable<paths['/docs/sites/{id}/redirects']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/docs/sites/{id}/redirects', { params: { path: { id: siteId } }, body: data }));
+  }
+
+  async updateSiteRedirect(siteId: string, redirectId: string, data: NonNullable<paths['/docs/sites/{id}/redirects/{redirect_id}']['put']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.PUT('/docs/sites/{id}/redirects/{redirect_id}', { params: { path: { id: siteId, redirect_id: redirectId } }, body: data }));
+  }
+
+  async deleteSiteRedirect(siteId: string, redirectId: string) {
+    return this.unwrap(this.api.DELETE('/docs/sites/{id}/redirects/{redirect_id}', { params: { path: { id: siteId, redirect_id: redirectId } } }));
   }`,
   },
   {
@@ -690,8 +758,15 @@ const RESOURCE_GROUPS: ResourceGroup[] = [
     singularName: "extension",
     // /flow/extensions/* for actions/triggers, /flow/actions/* for action runs
     pathPrefixes: ["/flow/extensions", "/flow/actions"],
-    // Two POST /triggers endpoints collide — the by-handle one is deduped to createTriggerPost
+    // Two POST /triggers endpoints collide on `createTriggerPost` after dedup.
+    // The override renames it to `createTriggerByHandle`, but BOTH paths get the
+    // override applied — so one is silently dropped. The current SDK exposes
+    // `createTriggerByHandle` for `/flow/extensions/triggers` POST (the
+    // collection-level path), which is misleading; the by-handle path
+    // `/flow/extensions/triggers/{handle}` POST is the missing one. Tracked as
+    // a follow-up to disambiguate properly.
     methodOverrides: { createTriggerPost: "createTriggerByHandle" },
+    knownSilentCollisions: ["createTriggerByHandle"],
   },
   {
     file: "flows",
@@ -870,7 +945,10 @@ function generateResourceFile(
       .filter((p) => pathStr === p || pathStr.startsWith(p + "/"))
       .sort((a, b) => b.length - a.length)[0];
     for (const method of HTTP_METHODS) {
-      if (def[method]) entries.push({ pathStr, method, prefix: matchedPrefix });
+      if (!def[method]) continue;
+      const skipKey = `${method.toUpperCase()} ${pathStr}`;
+      if (group.skipPaths?.includes(skipKey)) continue;
+      entries.push({ pathStr, method, prefix: matchedPrefix });
     }
   }
 
@@ -920,12 +998,39 @@ function generateResourceFile(
 
   // Generate method code
   const methods: string[] = [];
-  const usedNames = new Set<string>();
+  const usedNames = new Map<string, string>(); // methodName → first pathStr that claimed it
+  // Methods declared in customMethods reserve their names so the auto-generated
+  // pass doesn't try to emit a colliding duplicate.
+  if (group.customMethods) {
+    for (const m of group.customMethods.matchAll(/\basync\s+([a-zA-Z0-9_]+)\s*\(/g)) {
+      usedNames.set(m[1], "<customMethods>");
+    }
+  }
   for (const { pathStr, method, prefix } of entries) {
     const key = `${pathStr}::${method}`;
     const methodName = finalNames.get(key)!;
-    if (usedNames.has(methodName)) continue; // already generated (shouldn't happen post-dedup)
-    usedNames.add(methodName);
+    const existing = usedNames.get(methodName);
+    if (existing !== undefined) {
+      if (group.knownSilentCollisions?.includes(methodName)) {
+        // Documented pre-existing collision; second entry is intentionally
+        // skipped pending a proper fix. Logged so it stays visible.
+        console.warn(
+          `[generate] Skipping ${method.toUpperCase()} ${pathStr} — collides with ${existing} on \`${methodName}\` (allowlisted in knownSilentCollisions).`
+        );
+        continue;
+      }
+      // Two different (path, method) entries resolved to the same generated
+      // method name — without intervention the second silently disappears
+      // (which is how site-redirect endpoints went missing). Force the
+      // developer to disambiguate via methodOverrides or customMethods.
+      throw new Error(
+        `[generate] Method-name collision in resource group "${group.file}": ` +
+          `\`${methodName}\` is claimed by ${existing} (${method.toUpperCase()} ${pathStr} also wants it). ` +
+          `Add an entry to methodOverrides (e.g. { "${methodName}": "newName" }) ` +
+          `or move one of the methods to customMethods.`
+      );
+    }
+    usedNames.set(methodName, pathStr);
 
     const allMethodsOnPath = HTTP_METHODS.filter(
       (m) => (paths[pathStr] as Record<string, unknown>)[m],
