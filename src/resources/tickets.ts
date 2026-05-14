@@ -27,6 +27,10 @@ export class TicketsResource extends BaseResource {
     return this.unwrap(this.api.POST('/tickets/saved_replies', { body: data }));
   }
 
+  async createAiReplies(ticketId: string, data?: NonNullable<paths['/tickets/{id}/ai-replies']['post']['requestBody']>['content']['application/json']) {
+    return this.unwrap(this.api.POST('/tickets/{id}/ai-replies', { params: { path: { id: ticketId } }, body: data }));
+  }
+
   async listEvents(ticketId: string, params?: paths['/tickets/{id}/events']['get']['parameters']['query']) {
     return this.unwrap(this.api.GET('/tickets/{id}/events', { params: { path: { id: ticketId }, query: params } }));
   }
